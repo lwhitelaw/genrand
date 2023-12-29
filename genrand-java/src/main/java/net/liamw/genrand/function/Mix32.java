@@ -51,16 +51,6 @@ public class Mix32 implements Diffuser {
 		XSR;
 	}
 	
-	private static final Operand[] OPSEL = {
-			Operand.ADD,
-			Operand.XOR,
-			Operand.MUL,
-			Operand.ROL,
-			Operand.ROR,
-			Operand.XSL,
-			Operand.XSR
-	};
-	
 	/**
 	 * A mix operation.
 	 */
