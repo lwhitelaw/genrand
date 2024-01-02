@@ -20,7 +20,7 @@ public class Mix32 implements Diffuser {
 	/**
 	 * Valid operations to be applied.
 	 */
-	enum Operand {
+	public enum Operand {
 		/**
 		 * Add a constant.
 		 */
