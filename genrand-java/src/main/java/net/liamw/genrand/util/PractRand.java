@@ -278,62 +278,78 @@ public class PractRand {
 		return process.isAlive();
 	}
 	
+	/**
+	 * Wait until the PractRand process exits or the current thread is interrupted. In this case, the interrupt flag on the current flag is set.
+	 */
 	public void waitUntilEnd() {
 		try {
 			process.waitFor();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
 		}
 	}
 	
+	/**
+	 * Kill the PractRand process.
+	 */
 	public void kill() {
 		process.destroyForcibly();
 	}
 	
+	/**
+	 * Run a PractRand test on the given generator and return the level at which the test stops. Testing will
+	 * also stop if 2^limit bytes have been processed.
+	 * @param r the RNG to test
+	 * @param type the type of test to run
+	 * @param limit the limit at which testing should stop
+	 * @return the point at which PractRand stops
+	 */
 	public static int testWithGenerator(RandomGenerator r, TestType type, int limit) {
-		try {
-			byte[] b = new byte[4096];
-			PractRand test = PractRand.startTest(type);
-			while (test.running()) {
-				if (test.getLevel() >= limit) {
-					test.kill();
-					return test.getLevel();
-				}
-				r.nextBytes(b);
-				test.insertBytes(b);
+		// Allocate a byte array to send to PractRand for efficiency
+		byte[] b = new byte[4096];
+		// Run test and start pumping bytes
+		PractRand test = PractRand.startTest(type);
+		while (test.running()) {
+			// Kill the test if the imposed limit is reached
+			if (test.getLevel() >= limit) {
+				test.kill();
+				return test.getLevel();
 			}
-			return test.getLevel() - 1; // last level that passed
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			System.exit(0);
-			return 0; // unreachable
+			// Generate and pump bytes
+			r.nextBytes(b);
+			test.insertBytes(b);
 		}
+		// Test stopped
+		return test.getLevel() - 1; // last level that passed
 	}
 	
+	/**
+	 * Run a PractRand test on the given generator and return the level at which the test stops. Testing will
+	 * also stop if 2^limit bytes have been processed. Progress will be output to standard out.
+	 * <br><br>
+	 * This version intended for convenience.
+	 * @param r the RNG to test
+	 * @param type the type of test to run
+	 * @param limit the limit at which testing should stop
+	 * @return the point at which PractRand stops
+	 */
 	public static int testWithGeneratorPrintLevel(RandomGenerator r, TestType type, int limit) {
-		try {
-			byte[] b = new byte[4096];
-			PractRand test = PractRand.startTest(type);
-			int level = 0;
-			while (test.running()) {
-				if (test.getLevel() > level) {
-					level = test.getLevel();
-					System.out.println("PRACTRAND 2^" + level);
-				}
-				if (test.getLevel() >= limit) {
-					test.kill();
-					return test.getLevel();
-				}
-				r.nextBytes(b);
-				test.insertBytes(b);
+		byte[] b = new byte[4096];
+		PractRand test = PractRand.startTest(type);
+		int level = 0;
+		while (test.running()) {
+			if (test.getLevel() > level) {
+				level = test.getLevel();
+				System.out.println("PRACTRAND 2^" + level);
 			}
-			System.out.println(test.getPractRandOutput());
-			return test.getLevel() - 1; // last level that passed
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			System.exit(0);
-			return 0; // unreachable
+			if (test.getLevel() >= limit) {
+				test.kill();
+				return test.getLevel();
+			}
+			r.nextBytes(b);
+			test.insertBytes(b);
 		}
+		System.out.println(test.getPractRandOutput());
+		return test.getLevel() - 1; // last level that passed
 	}
 }
