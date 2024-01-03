@@ -105,6 +105,12 @@ public class Avalanche64 {
 		}
 	}
 	
+	/**
+	 * Perform an avalanche test on the given function for a given number of iterations and store the statistics into the given array.
+	 * @param flipStatistics the 64x64 array that statistics will be written into
+	 * @param diffuser the function under test
+	 * @param iterations number of iterations to run the test for
+	 */
 	private static void doAvalancheTest(int[][] flipStatistics, Diffuser64 diffuser, int iterations) {
 		Random random = ThreadLocalRandom.current();
 		for (int i = 0; i < iterations; i++) {
@@ -126,6 +132,11 @@ public class Avalanche64 {
 		}
 	}
 	
+	/**
+	 * Produce an avalanche graph for the given function.
+	 * @param diffuser the function under test
+	 * @return a 64x64 image showing how the bits flip
+	 */
 	public static BufferedImage createAvalancheGraph(Diffuser64 diffuser) {
 		final int[][] flipStatistics = new int[BITS][BITS];
 		final int ITERATIONS = 1 << 20;
@@ -154,6 +165,12 @@ public class Avalanche64 {
 		return bimg;
 	}
 	
+	/**
+	 * Test the function for avalanche and return a value describing its deviation from the ideal.
+	 * Values closer to zero mean better avalanching properties.
+	 * @param diffuser the function under test
+	 * @return a value describing the avalanche performance of this function
+	 */
 	public static double scoreAvalanche(Diffuser64 diffuser) {
 		final int[][] flipStatistics = new int[BITS][BITS];
 		final int ITERATIONS = 1 << 20;
@@ -182,16 +199,35 @@ public class Avalanche64 {
 		return Math.sqrt(sum);
 	}
 	
-	//flip a bit at specified position
+	/**
+	 * Flip the given bit in the input at the given bit position.
+	 * @param input the input to modify
+	 * @param which the bit to flip, from 0 to 63
+	 * @return the input with one flipped bit
+	 */
 	public static long flipBit(long input, int which) {
 		return input ^ (1L << which);
 	}
 	
+	/**
+	 * Return true if the given bit from 0-63 in the input is set.
+	 * @param input the input to test
+	 * @param which the bit to test
+	 * @return true if the given bit is set
+	 */
 	public static boolean testBit(long input, int which) {
 		return (input & (1L << which)) != 0;
 	}
 	
-	//Return a 1 in every position where the bit changed
+	/**
+	 * Return what output bits changed based on the input when a given bit is flipped.
+	 * The diffused input is expected to match diffuser.diffuse(input).
+	 * @param input Input to test
+	 * @param whichBit the bit to flip
+	 * @param diffusedInput diffused input, expected to be cached by caller
+	 * @param diffuser function to use
+	 * @return The bits that changed when the given bit was flipped
+	 */
 	public static long testDiffuse(long input, int whichBit, long diffusedInput, Diffuser64 diffuser) {
 		long flipped = diffuser.diffuse(flipBit(input, whichBit));
 		return diffusedInput ^ flipped;

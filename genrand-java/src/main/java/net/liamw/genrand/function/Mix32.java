@@ -67,8 +67,15 @@ public class Mix32 implements Diffuser {
 	 */
 	private Diffuser compiled = null;
 	
+	/**
+	 * Construct a function with no operators.
+	 */
 	public Mix32() {}
 	
+	/**
+	 * Construct a function that is a copy of the provided function.
+	 * @param other function to copy
+	 */
 	public Mix32(Mix32 other) {
 		operands.addAll(other.operands);
 		compiled = other.compiled;

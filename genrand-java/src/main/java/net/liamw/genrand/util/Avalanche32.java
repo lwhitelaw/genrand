@@ -168,12 +168,13 @@ public class Avalanche32 {
 	}
 	
 	/**
-	 * 
-	 * @param input
-	 * @param whichBit
-	 * @param diffusedInput
-	 * @param diffuser
-	 * @return
+	 * Return what output bits changed based on the input when a given bit is flipped.
+	 * The diffused input is expected to match diffuser.diffuse(input).
+	 * @param input Input to test
+	 * @param whichBit the bit to flip
+	 * @param diffusedInput diffused input, expected to be cached by caller
+	 * @param diffuser function to use
+	 * @return The bits that changed when the given bit was flipped
 	 */
 	private static int testDiffuse(int input, int whichBit, int diffusedInput, Diffuser diffuser) {
 		int flipped = diffuser.diffuse(flipBit(input, whichBit));
