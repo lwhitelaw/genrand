@@ -28,6 +28,29 @@ public class Avalanche32 {
 		 * @return the output value
 		 */
 		public int diffuse(int input);
+		
+		/**
+		 * Create a counter-based PRNG from this function.
+		 * @return a random number generator constructed from this function
+		 */
+		public default Random asRandom() {
+			return new Random() {
+				int c = LWRand64.threadLocal().nextInt(); // counter
+				
+				public void advance() {
+					c++;
+				}
+				
+				public int next(int bits) {
+					advance();
+					return mix(c) >>> (32 - bits);
+				}
+
+				private int mix(int c) {
+					return diffuse(c);
+				}
+			};
+		}
 	}
 	
 	/**

@@ -5,12 +5,13 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import net.liamw.genrand.util.LWRand64;
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
 
 /**
@@ -123,7 +124,7 @@ public class Mix64 implements Diffuser64 {
 	 */
 	public static MixEntry randomMixEntry(Operand... list) {
 		if (list.length == 0) throw new IllegalArgumentException("Must specify at least one operator type");
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		// get a random operator type
 		Operand op = list[tlr.nextInt(list.length)];
 		// get a random integer to become the operator argument
@@ -146,18 +147,18 @@ public class Mix64 implements Diffuser64 {
 	 * @param list The list of valid operator types to choose from
 	 */
 	public void addRandom(Operand... list) {
-		operands.add(randomMixEntry());
+		operands.add(randomMixEntry(list));
 		compiled = null;
 	}
 	
 	/**
 	 * Replace a random operator from this function with another random operator.
 	 */
-	public void replaceRandom() {
+	public void replaceRandom(Operand... list) {
 		if (operands.size() == 0) return;
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		int which = tlr.nextInt(operands.size());
-		operands.set(which, randomMixEntry());
+		operands.set(which, randomMixEntry(list));
 		compiled = null;
 	}
 	
@@ -166,7 +167,7 @@ public class Mix64 implements Diffuser64 {
 	 */
 	public void removeRandom() {
 		if (operands.size() == 0) return;
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		int which = tlr.nextInt(operands.size());
 		operands.remove(which);
 		compiled = null;
@@ -178,7 +179,7 @@ public class Mix64 implements Diffuser64 {
 	 */
 	public Random asRandom() {
 		return new Random() {
-			long c = ThreadLocalRandom.current().nextLong(); // counter
+			long c = LWRand64.threadLocal().nextLong(); // counter
 			
 			long value;
 			int haveBits;
@@ -215,7 +216,7 @@ public class Mix64 implements Diffuser64 {
 	 */
 	public Random asRandomChaotic() {
 		return new Random() {
-			long c = ThreadLocalRandom.current().nextLong(); // counter
+			long c = LWRand64.threadLocal().nextLong(); // counter
 			
 			long value;
 			int haveBits;

@@ -6,18 +6,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.random.RandomGenerator;
 
 import net.liamw.genrand.function.Mix32;
+import net.liamw.genrand.function.Mix32.Operand;
 import net.liamw.genrand.util.Avalanche32;
+import net.liamw.genrand.util.LWRand64;
 import net.liamw.genrand.util.PractRand;
 import net.liamw.genrand.util.PractRand.TestType;
 
 public class Gen32Bit {
-	public static void run() {
+	public static void run(int optimiseRounds, double threshold, Operand... types) {
 		// Test parameters
 		
 		// The target "good enough" score for avalanche test
-		final double OPTIMISE_TOLERANCE = 0.5;
+		final double OPTIMISE_TOLERANCE = threshold;
 		// PractRand target to hit
 		final int OPTIMISE_PRACTRAND = 1;
 		// PractRand limit. Do not run any further than this.
@@ -25,68 +28,45 @@ public class Gen32Bit {
 		// Path to store files
 		final Path OUTPUT_FOLDER = Paths.get("E:\\ProjectTesting\\Random\\Generators\\32bit\\Av");
 		{
+			// Run forever
 			int trial = 0;
-			int[] numPractRandThreads = new int[1];
-			ReentrantLock prLock = new ReentrantLock();
-			Condition condIsRunPermissible = prLock.newCondition();
 			for (;;) {
+				// Trial info
 				trial++;
 				System.out.println("Trial " + trial);
-				// Create new mix with one operation replaced or removed
-				Mix32 newMix = new Mix32();
-				for (int i = 0; i < 3; i++) newMix.addRandom(Mix32.Operand.XSR);				
-				// Run tests.
-				
-				// Run avalanche test.
-				double newScore = Avalanche32.scoreAvalanche(newMix);
-				System.out.println("Av: " + newScore);
-				
-				if (newScore > OPTIMISE_TOLERANCE) {
-					continue; // Value not in tolerance. Skip.
-				}
-				
-				// Wait until less PractRand tasks are running
-				prLock.lock();
-				try {
-					while (numPractRandThreads[0] >= 4) {
-						System.out.println("Awaiting a PractRand task to finish");
-						condIsRunPermissible.awaitUninterruptibly();
-					}
-					numPractRandThreads[0]++;
-				} finally {
-					prLock.unlock();
-				}
-				// Validated.
-				// Run PractRand in seperate thread
-				Thread.startVirtualThread(() -> {
-					try {
-						int newPractRand = PractRand.testWithGenerator(newMix.asRandom(), TestType.STDIN32, PRACTRAND_LIMIT);
-						System.out.println("PractRand: 2^" + newPractRand);
-						
-						if (newPractRand < OPTIMISE_PRACTRAND) {
-							return; // Value not in tolerance. Skip.
+				// Create new mix with one addition operation to start with and score it
+				Mix32 best = new Mix32();
+				best.addRandom(Operand.ADD);
+				double bestScore = Avalanche32.scoreAvalanche(best);
+				// Print
+				System.out.printf("Current: %f\n%s\n",bestScore,best.toString());
+				// Begin trials
+				while (bestScore > OPTIMISE_TOLERANCE) {
+					// Add a random operator and score it
+					best.addRandom(types);
+					bestScore = Avalanche32.scoreAvalanche(best);
+					System.out.printf("Adding an operator and rescored: %f\n%s\n",bestScore,best.toString());
+					// Begin optimisation attempts
+					int attempts = optimiseRounds;
+					while (attempts > 0) {
+						System.out.printf("%d operators, optimise phase (%d attempts remain)\n",best.oplen(),attempts);
+						// Copy the mix and modify one operator
+						Mix32 copy = new Mix32(best);
+						copy.replaceRandom(types);
+						double copyScore = Avalanche32.scoreAvalanche(copy);
+						// If it is better, save it and restart the attempt counter
+						if (copyScore < bestScore) {
+							best = copy;
+							bestScore = copyScore;
+							attempts = optimiseRounds;
+							System.out.printf("New best: %f\n%s\nRestarted the attempt counter.\n",bestScore,best.toString());
+						} else {
+							attempts--;
 						}
-						
-						System.out.println("=== FOUND ===");
-						System.out.println(newMix.toString());
-						System.out.println(newScore);
-						System.out.println("PractRand 2^" + newPractRand);
-						System.out.println("=============");
-						
-						StringBuilder sb = new StringBuilder();
-						sb.append("// Avalanche score: ").append(newScore).append("\n");
-						sb.append("// PractRand: 2^").append(newPractRand).append("\n");
-						sb.append(newMix.toString());
-						writeNewFile(sb.toString(), OUTPUT_FOLDER, "-PRM" + newPractRand);
-					} finally {
-						// decrement counter
-						prLock.lock();
-						if (numPractRandThreads[0] > 0) numPractRandThreads[0]--;
-						condIsRunPermissible.signal();
-						prLock.unlock();
 					}
-				});
+				}
 			}
+			// Begin another trial, write out
 		}
 	}
 	
@@ -108,4 +88,12 @@ Table properties
 - PractRand score
 - Source code (CAS?)
 - Avalanche graph image (CAS?)
+
+Gen plan
+- Start with 1 operator, addition
+- Stack random operator and calculate avalanche
+  - Give N tries to improve this mix by replacing any operator at random
+  - After N tries up, stack again and repeat
+- Keep stacking until avalanche hits a threshold, then try to improve it one last time
+- Save the end-result to database
 */

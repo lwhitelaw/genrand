@@ -59,7 +59,7 @@ public class PractRand {
 	/**
 	 * Where to find the PractRand binary
 	 */
-	private static final String PRACTRAND = "";
+	private static final String PRACTRAND = "E:\\ProjectTesting\\Random\\practrand.exe";
 	/**
 	 * The PractRand process itself
 	 */

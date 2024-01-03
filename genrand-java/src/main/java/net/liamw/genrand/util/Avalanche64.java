@@ -31,55 +31,73 @@ public class Avalanche64 {
 		public long diffuse(long input);
 		
 		/**
-		 * Create a counter-based pseudorandom number generator using this function as the counter transform.
-		 * @return a Random instance based on this function
+		 * Create a counter-based PRNG from this function.
+		 * @return a random number generator constructed from this function
 		 */
-		default Random asRandom() {
+		public default Random asRandom() {
 			return new Random() {
-				/**
-				 * The counter value, incremented by one. Passes through the transform function to produce values.
-				 */
-				private long c = ThreadLocalRandom.current().nextLong();
-				/**
-				 * The remaining bits in the last 64 bit value generated.
-				 */
-				private long value;
-				/**
-				 * How many bits are available in value before a new value must be generated.
-				 */
-				private int haveBits;
+				long c = LWRand64.threadLocal().nextLong(); // counter
 				
-				/**
-				 * Advance the counter by one.
-				 */
+				long value;
+				int haveBits;
+				
 				public void advance() {
 					c++;
 				}
 				
-				/**
-				 * Produce up to 32 pseudorandom bits.
-				 */
 				public int next(int bits) {
 					// refill if needed
 					if (haveBits == 0) {
-						advance(); // advance counter
-						value = mix(c); // produce the transformed output
-						haveBits = 64; // we now have 64 fresh bits
+						advance();
+						value = mix(c);
+						haveBits = 64;
 					}
-					// extract 32 bits
+					// extract
 					int value32 = (int)(value & 0xFFFFFFFFL);
 					// remove from 64bit value for accounting
 					value = (value >>> 32);
 					haveBits -= 32;
-					// truncate the 32 bits to the amount requested
+					// return
 					return value32 >>> (32 - bits);
 				}
 
-				/**
-				 * Produce the transform of the input value.
-				 * @param c the input value
-				 * @return the transform output
-				 */
+				private long mix(long c) {
+					return diffuse(c);
+				}
+			};
+		}
+		
+		/**
+		 * Create a chaotic PRNG from this function.
+		 * @return a random number generator constructed from this function
+		 */
+		public default Random asRandomChaotic() {
+			return new Random() {
+				long c = LWRand64.threadLocal().nextLong(); // counter
+				
+				long value;
+				int haveBits;
+				
+				public void advance() {
+					c = mix(c);
+				}
+				
+				public int next(int bits) {
+					// refill if needed
+					if (haveBits == 0) {
+						advance();
+						value = c;
+						haveBits = 64;
+					}
+					// extract
+					int value32 = (int)(value & 0xFFFFFFFFL);
+					// remove from 64bit value for accounting
+					value = (value >>> 32);
+					haveBits -= 32;
+					// return
+					return value32 >>> (32 - bits);
+				}
+
 				private long mix(long c) {
 					return diffuse(c);
 				}

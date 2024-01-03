@@ -5,13 +5,14 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import net.liamw.genrand.util.Avalanche32.Diffuser;
+import net.liamw.genrand.util.LWRand64;
 
 /**
  * A 32 bit bijective permutation function with manipulatable operators. Instances are JIT compiled for speed.
@@ -65,6 +66,13 @@ public class Mix32 implements Diffuser {
 	 * JIT-compiled function. Null if not compiled yet.
 	 */
 	private Diffuser compiled = null;
+	
+	public Mix32() {}
+	
+	public Mix32(Mix32 other) {
+		operands.addAll(other.operands);
+		compiled = other.compiled;
+	}
 	
 	@Override
 	public int diffuse(int input) {
@@ -124,7 +132,7 @@ public class Mix32 implements Diffuser {
 	 */
 	public static MixEntry randomMixEntry(Operand... list) {
 		if (list.length == 0) throw new IllegalArgumentException("Must specify at least one operator type");
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		// get a random operator type
 		Operand op = list[tlr.nextInt(list.length)];
 		// get a random integer to become the operator argument
@@ -147,18 +155,18 @@ public class Mix32 implements Diffuser {
 	 * @param list The list of valid operator types to choose from
 	 */
 	public void addRandom(Operand... list) {
-		operands.add(randomMixEntry());
+		operands.add(randomMixEntry(list));
 		compiled = null;
 	}
 	
 	/**
 	 * Replace a random operator from this function with another random operator.
 	 */
-	public void replaceRandom() {
+	public void replaceRandom(Operand... list) {
 		if (operands.size() == 0) return;
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		int which = tlr.nextInt(operands.size());
-		operands.set(which, randomMixEntry());
+		operands.set(which, randomMixEntry(list));
 		compiled = null;
 	}
 	
@@ -167,33 +175,10 @@ public class Mix32 implements Diffuser {
 	 */
 	public void removeRandom() {
 		if (operands.size() == 0) return;
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		RandomGenerator tlr = LWRand64.threadLocal();
 		int which = tlr.nextInt(operands.size());
 		operands.remove(which);
 		compiled = null;
-	}
-	
-	/**
-	 * Create a counter-based PRNG from this function.
-	 * @return a random number generator constructed from this function
-	 */
-	public Random asRandom() {
-		return new Random() {
-			int c = ThreadLocalRandom.current().nextInt(); // counter
-			
-			public void advance() {
-				c++;
-			}
-			
-			public int next(int bits) {
-				advance();
-				return mix(c) >>> (32 - bits);
-			}
-
-			private int mix(int c) {
-				return diffuse(c);
-			}
-		};
 	}
 	
 	/**
