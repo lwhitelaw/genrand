@@ -145,7 +145,7 @@ public class Mix64 implements Diffuser64 {
 		long arg = tlr.nextLong();
 		// adjust arg based on specific needs of operator
 		switch (op) {
-			case ADD: arg = (arg << 1) | 1; break; // odd value
+			case ADD: break; // no special needs
 			case XOR: break; // no special needs
 			case MUL: arg = (arg << 1) | 1; break; // odd value
 			case ROL: arg = (arg & 0x3F); if (arg == 0) arg = 1; break; // valid nonzero shift value
