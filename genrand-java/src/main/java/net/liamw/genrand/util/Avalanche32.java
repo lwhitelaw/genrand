@@ -121,7 +121,10 @@ public class Avalanche32 {
 	 */
 	public static double scoreAvalanche(Diffuser diffuser) {
 		final int[][] flipStatistics = new int[BITS][BITS];
-		final int ITERATIONS = 1 << 20;
+		// More iterations mean a value closer to the real value, down to a noise floor beyond which values are meaningless
+		// 65536 iterations is a good tradeoff between accuracy/speed
+		// Noise floor -> 0.06 @ 65536 iters
+		final int ITERATIONS = 1 << 16;
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
 		// The ideal is every output bit has a 50% chance of flipping when any input bit is flipped

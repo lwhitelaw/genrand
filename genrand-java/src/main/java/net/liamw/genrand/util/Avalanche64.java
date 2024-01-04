@@ -173,7 +173,7 @@ public class Avalanche64 {
 	 */
 	public static double scoreAvalanche(Diffuser64 diffuser) {
 		final int[][] flipStatistics = new int[BITS][BITS];
-		final int ITERATIONS = 1 << 20;
+		final int ITERATIONS = 1 << 16;
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
 		// The ideal is every output bit has a 50% chance of flipping when any input bit is flipped

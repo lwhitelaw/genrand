@@ -21,7 +21,7 @@ public class Mix64 implements Diffuser64 {
 	/**
 	 * Valid operations to be applied.
 	 */
-	enum Operand {
+	public enum Operand {
 		/**
 		 * Add a constant.
 		 */
@@ -66,6 +66,20 @@ public class Mix64 implements Diffuser64 {
 	 * JIT-compiled function. Null if not compiled yet.
 	 */
 	private Diffuser64 compiled = null;
+	
+	/**
+	 * Construct a function with no operators.
+	 */
+	public Mix64() {}
+	
+	/**
+	 * Construct a function that is a copy of the provided function.
+	 * @param other function to copy
+	 */
+	public Mix64(Mix64 other) {
+		operands.addAll(other.operands);
+		compiled = other.compiled;
+	}
 	
 	@Override
 	public long diffuse(long input) {
