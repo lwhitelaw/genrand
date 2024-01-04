@@ -191,7 +191,7 @@ public class Mix64 implements Diffuser64 {
 	 * Compile this function to a new diffuser instance.
 	 * @return a compiled version of this function
 	 */
-	public Diffuser64 compileClass() {
+	private Diffuser64 compileClass() {
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 		String packageName = getClass().getPackageName().replace('.', '/');
 		// Create a class with an anonymous name - it'll be loaded as a hidden class so the name isn't important
