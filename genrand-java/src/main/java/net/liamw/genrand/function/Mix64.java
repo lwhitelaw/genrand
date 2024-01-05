@@ -55,7 +55,7 @@ public class Mix64 implements Diffuser64 {
 	/**
 	 * A mix operation.
 	 */
-	record MixEntry(Operand op, long arg) {};
+	public record MixEntry(Operand op, long arg) {};
 	
 	/**
 	 * List of operations to apply in order.
@@ -129,6 +129,14 @@ public class Mix64 implements Diffuser64 {
 	 */
 	public int oplen() {
 		return operands.size();
+	}
+	
+	/**
+	 * Return the operator list.
+	 * @return the operator list
+	 */
+	public List<MixEntry> getOperands() {
+		return operands;
 	}
 	
 	/**

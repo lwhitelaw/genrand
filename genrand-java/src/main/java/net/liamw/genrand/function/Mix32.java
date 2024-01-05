@@ -55,7 +55,7 @@ public class Mix32 implements Diffuser {
 	/**
 	 * A mix operation.
 	 */
-	record MixEntry(Operand op, int arg) {};
+	public record MixEntry(Operand op, int arg) {};
 	
 	/**
 	 * List of operations to apply in order.
@@ -130,6 +130,14 @@ public class Mix32 implements Diffuser {
 	 */
 	public int oplen() {
 		return operands.size();
+	}
+	
+	/**
+	 * Return the operator list.
+	 * @return the operator list
+	 */
+	public List<MixEntry> getOperands() {
+		return operands;
 	}
 	
 	/**
