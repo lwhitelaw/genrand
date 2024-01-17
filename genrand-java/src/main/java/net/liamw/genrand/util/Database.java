@@ -1,11 +1,22 @@
 package net.liamw.genrand.util;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.imageio.ImageIO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.stereotype.Component;
+
+import net.liamw.genrand.function.Mix32;
 
 /**
  * Code to manipulate the database where found mixers are held.
@@ -47,10 +58,6 @@ public class Database {
 		 */
 		private final long id;
 		/**
-		 * The lineage identifier of this mix function. Related mix functions share this identifier.
-		 */
-		private final long lineageId;
-		/**
 		 * Bitfield of operators present in this mix function.
 		 */
 		private final int operators;
@@ -71,14 +78,13 @@ public class Database {
 		 */
 		private final String sourceCode;
 		/**
-		 * Hash for the avalanche image associated with this mix function. May be null.
+		 * ID for the avalanche image associated with this mix function. May be null.
 		 */
 		private final String avalancheImageRef;
 		
 		/**
 		 * Initialise a MixEntry with all fields.
 		 * @param id id field
-		 * @param lineageId lineage id field
 		 * @param operators operators field
 		 * @param operatorCount opcount field
 		 * @param avalancheScore av score field
@@ -86,9 +92,8 @@ public class Database {
 		 * @param sourceCode source code field
 		 * @param avalancheImageRef av image ref field
 		 */
-		public MixEntry(long id, long lineageId, int operators, int operatorCount, double avalancheScore, int practRandScore, String sourceCode, String avalancheImageRef) {
+		public MixEntry(long id, int operators, int operatorCount, double avalancheScore, int practRandScore, String sourceCode, String avalancheImageRef) {
 			this.id = id;
-			this.lineageId = lineageId;
 			this.operators = operators;
 			this.operatorCount = operatorCount;
 			this.avalancheScore = avalancheScore;
@@ -106,7 +111,6 @@ public class Database {
 		 */
 		public static MixEntry fromDatabaseRowMapper(ResultSet mapper, int rowId) throws SQLException {
 			long id = mapper.getLong("identifier");
-			long lineage = mapper.getLong("lineage");
 			int operators = mapper.getInt("operators");
 			int opCount = mapper.getInt("operatorCount");
 			double avalancheScore = mapper.getDouble("avalancheScore");
@@ -114,7 +118,7 @@ public class Database {
 			if (mapper.wasNull()) practRandScore = -1;
 			String source = mapper.getString("source");
 			String avalancheImageRef = mapper.getString("avalancheImageRef"); // may be null
-			return new MixEntry(id, lineage, operators, opCount, avalancheScore, practRandScore, source, avalancheImageRef);
+			return new MixEntry(id, operators, opCount, avalancheScore, practRandScore, source, avalancheImageRef);
 		}
 
 		/**
@@ -122,13 +126,6 @@ public class Database {
 		 */
 		public final long getId() {
 			return id;
-		}
-
-		/**
-		 * @return the lineageId
-		 */
-		public final long getLineageId() {
-			return lineageId;
 		}
 
 		/**
@@ -174,6 +171,8 @@ public class Database {
 		}
 	}
 	
+	private static final Path IMAGE_PATH = Paths.get("./images/");
+	
 	@Autowired
 	JdbcTemplate database;
 	
@@ -184,7 +183,6 @@ public class Database {
 		database.execute("""
 				CREATE TABLE IF NOT EXISTS mix32 (
 					identifier INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-					lineage INTEGER NOT NULL,
 					operators INTEGER NOT NULL,
 					operatorCount INTEGER NOT NULL,
 					avalancheScore REAL NOT NULL,
@@ -196,7 +194,6 @@ public class Database {
 		database.execute("""
 				CREATE TABLE IF NOT EXISTS mix64 (
 					identifier INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-					lineage INTEGER NOT NULL,
 					operators INTEGER NOT NULL,
 					operatorCount INTEGER NOT NULL,
 					avalancheScore REAL NOT NULL,
@@ -205,5 +202,66 @@ public class Database {
 					avalancheImageRef TEXT
 				)
 				""");
+	}
+	
+	/**
+	 * Write a generated mix function into the database.
+	 * @param mix mix to write
+	 */
+	public void submit(Mix32 mix) {
+		// determine ops in use
+		int operators = 0;
+		for (Mix32.MixEntry entry : mix.getOperands()) {
+			switch (entry.op()) {
+				case ADD: operators |= (1 << MixEntry.OP_ADD); break;
+				case XOR: operators |= (1 << MixEntry.OP_XOR); break;
+				case MUL: operators |= (1 << MixEntry.OP_MUL); break;
+				case ROL: operators |= (1 << MixEntry.OP_ROL); break;
+				case ROR: operators |= (1 << MixEntry.OP_ROR); break;
+				case XSL: operators |= (1 << MixEntry.OP_XSL); break;
+				case XSR: operators |= (1 << MixEntry.OP_XSR); break;
+			}
+		}
+		// get remaining properties
+		int operatorCount = mix.oplen();
+		String sourceCode = mix.toString();
+		// calculate avalanche
+		double avalancheScore = Avalanche32.scoreAvalanche(mix);
+		// make avalanche image and write it out
+		BufferedImage avalancheImage = Avalanche32.createAvalancheGraph(mix);
+		long snowflake = putImage(avalancheImage);
+		if (snowflake == 0) return; // image write failed
+		// make and write the database entry
+		final int finalOperators = operators; // for the later lambda expression
+		database.update("INSERT INTO mix32 (operators,operatorCount,avalancheScore,source,avalancheImageRef) VALUES (?,?,?,?,?)", pss -> {
+			pss.setInt(1,finalOperators);
+			pss.setInt(2,operatorCount);
+			pss.setDouble(3,avalancheScore);
+			pss.setString(4,sourceCode);
+			pss.setString(5,String.format("%016X",snowflake));
+		});
+	}
+	
+	private static long putImage(BufferedImage image) {
+		long snowflake = Snowflake.generate();
+		Path path = IMAGE_PATH.resolve(String.format("%03X",mix12bit(snowflake)));
+		try {
+			Files.createDirectories(path);
+			ImageIO.write(image, "PNG", path.resolve(String.format("%016X.png",snowflake)).toFile());
+		} catch (IOException ex) {
+			return 0;
+		}
+		return snowflake;
+	}
+	
+	private static int mix12bit(long v) {
+		v ^= v >>> 21;
+		v *= 0x2AE264A9B1A36D69L;
+		v ^= v >>> 37;
+		v *= 0x396747CA3A58E56FL;
+		v ^= v >>> 44;
+		v *= 0xFB7719182775D593L;
+		v ^= v >>> 21;
+		return (int)(v & 0xFFFL);
 	}
 }

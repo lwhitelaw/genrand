@@ -3,9 +3,10 @@ package net.liamw.genrand;
 import net.liamw.genrand.function.Mix32;
 import net.liamw.genrand.function.Mix32.Operand;
 import net.liamw.genrand.util.Avalanche32;
+import net.liamw.genrand.util.Database;
 
 public class Gen32Bit {
-	public static void run(int optimiseRounds, double threshold, Operand... types) {
+	public static void run(Database database, int optimiseRounds, double threshold, Operand... types) {
 		// Run forever
 		int trial = 0;
 		for (;;) {
@@ -42,9 +43,10 @@ public class Gen32Bit {
 						attempts--;
 					}
 				}
+				// Write out best so far
+				database.submit(best);
 			}
 		}
-		// Begin another trial, write out
 	}
 }
 

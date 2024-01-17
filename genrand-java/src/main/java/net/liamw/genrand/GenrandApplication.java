@@ -1,18 +1,9 @@
 package net.liamw.genrand;
 
-import java.io.File;
-
-import javax.imageio.ImageIO;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import net.liamw.genrand.util.Avalanche32;
-import net.liamw.genrand.util.Avalanche32.Diffuser;
-import net.liamw.genrand.util.Avalanche64;
-import net.liamw.genrand.util.Avalanche64.Diffuser64;
 
 /**
  * Main entrypoint for the backend.
@@ -36,6 +27,6 @@ public class GenrandApplication implements CommandLineRunner {
 	 */
 	@Override
 	public void run(String... args) throws Exception {
-		genmain.test();
+		genmain.runMix32();
 	}
 }
