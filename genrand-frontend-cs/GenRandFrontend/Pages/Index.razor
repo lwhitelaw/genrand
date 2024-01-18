@@ -1,9 +1,69 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+<PageTitle>GenRand</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to GenRand!</h1>
 
-Welcome to your new app.
+Here, you will find automatically-generated functions that produce pseudo-random permutations over the domains of common data
+types like 32 and 64 bit integers.
+<br /><br />
+These functions are intended to be reasonably fast while also providing sufficient properties based on the
+<a href="https://en.wikipedia.org/wiki/Avalanche_effect">avalanche effect</a> and strict avalanche criterion (SAC): if any one bit
+in the input is flipped, all the bits in the output should change with 50% probability. Such functions may be useful for such use
+cases like pseudo-random number generation, hashing, obfuscation, and maybe even as a source of nothing-up-my-sleeve primitives.
+<br /><br />
+The generated algorithms here are released into the public domain. <strong>These algorithms are provided as-is, with no express
+or implied warranties, including those concerning merchantability and fitness for a particular purpose. Use them at your own risk.</strong>
+It's the usual legal disclaimers.
+<br /><br />
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+<h2>Pseudo-random permutations?</h2>
+
+I'm aware that this term has a specific meaning in cryptography: a function that cannot be distinguished from a random permutation
+with practical effort.
+<br /><br />
+Even the best of these functions likely do not fall under that strict definition, but do intend to follow that spirit. Others certainly
+will <em>not</em> live up to that promise. Unfortunately, there is not a more convenient term that does not step on this established
+meaning. Therefore, these will be referred to as (non-cryptographic) pseudo-random permutations. That being said, do not
+directly use these for cryptographic security! There's no verification whatsoever. (But if you are a cryptographer designing a new algorithm,
+go ahead and feel free to use these as part of it.)
+<br /><br />
+
+<h2>The Functions</h2>
+<h3>Design</h3>
+At this moment, 32 bit functions are available. The functions are currently based on a composition of the following:
+<ul>
+	<li>addition by constant</li>
+	<li>bitwise XOR by constant</li>
+	<li>modular multiplication by constant</li>
+	<li>bitwise rotations by constant amounts</li>
+	<li>left and right XOR-shifts (XOR the value with another bit-shifted copy of itself by constant amount)</li>
+</ul>
+Each of these is known as an <em>operator</em>. Not all operators are used in generated functions. Functions with less
+operators will generally be faster, but the output will not be as pseudo-random as a function using more of them.
+
+<h3>Scoring</h3>
+Functions are scored based on how they fare in the <em>avalanche test</em>, which tries to determine how well the function follows
+the strict avalanche criterion. For a large amount of iterations, a starting random input value is picked and the output value
+is obtained from the function under test. Then, for each of the bit positions in the input, exactly one bit is flipped and the modified value
+is given as input to the function. The output value from the modified input is compared to the output value from the original input to determine
+how the output bits changed as a result. Statistics on observed bit flips are kept for each input bit <em>x</em> and output bit <em>y</em>. The
+ideal observed value for each (<em>x</em>,<em>y</em>) tuple should be close to 50%. Therefore, the avalanche score is the mean-squared error
+from this ideal value. Lower values show that the function has better avalanche properties than a function with a higher value.
+<br /><br />
+The results of the avalanche test are also visualised in the <em>avalanche graph</em> showing how output bits responded to given bit flips in
+the input. The flipped input bit is identified by the columns, going from left to right. The output bits are shown from top-to-bottom within a given
+column. Black pixels at a given (<em>x</em>,<em>y</em>) indicate that output bit <em>y</em> <em>never</em> flipped when input bit <em>x</em> flipped.
+White pixels at a given (<em>x</em>,<em>y</em>) indicate that output bit <em>y</em> <em>always</em> flipped when input bit <em>x</em> flipped.
+Grey pixels indicate the bit flipped only sometimes. The ideal function following the strict avalanche criterion shows 50% grey in all pixels.
+
+<img src="/example/identity.png" />
+The avalanche graph of the identity function <em>f(x) = x</em>.
+<img src="/example/bad.png" />
+This function is not mixing well.
+<img src="/example/okay.png" />
+This function has okay mixing.
+<img src="/example/good.png" />
+This function has very good mixing, but it is not quite perfect.
+<img src="/example/best.png" />
+This function is what a good permutation should look like.
