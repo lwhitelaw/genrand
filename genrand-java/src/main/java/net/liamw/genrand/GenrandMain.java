@@ -40,6 +40,6 @@ public class GenrandMain {
 
 	public void runMix32() {
 		database.checkAndInitTables();
-		Gen32Bit.run(database,64,0.1,Operand.ADD,Operand.XSL,Operand.XSR);
+		Gen32BitAddXorshift.run(database,64,0.1);
 	}
 }

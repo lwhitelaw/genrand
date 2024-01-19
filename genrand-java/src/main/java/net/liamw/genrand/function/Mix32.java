@@ -4,7 +4,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.random.RandomGenerator;
 
 import org.objectweb.asm.ClassWriter;
@@ -182,6 +181,15 @@ public class Mix32 implements Diffuser {
 		RandomGenerator tlr = LWRand64.threadLocal();
 		int which = tlr.nextInt(operands.size());
 		operands.set(which, randomMixEntry(list));
+		compiled = null;
+	}
+	
+	/**
+	 * Replace the operator at this index with another random operator.
+	 */
+	public void replaceRandomAt(int index, Operand... list) {
+		if (operands.size() == 0) return;
+		operands.set(index, randomMixEntry(list));
 		compiled = null;
 	}
 	
