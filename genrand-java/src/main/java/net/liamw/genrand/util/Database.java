@@ -17,6 +17,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.stereotype.Component;
 
 import net.liamw.genrand.function.Mix32;
+import net.liamw.genrand.function.Mix64;
 
 /**
  * Code to manipulate the database where found mixers are held.
@@ -234,6 +235,44 @@ public class Database {
 		// make and write the database entry
 		final int finalOperators = operators; // for the later lambda expression
 		database.update("INSERT INTO mix32 (operators,operatorCount,avalancheScore,source,avalancheImageRef) VALUES (?,?,?,?,?)", pss -> {
+			pss.setInt(1,finalOperators);
+			pss.setInt(2,operatorCount);
+			pss.setDouble(3,avalancheScore);
+			pss.setString(4,sourceCode);
+			pss.setString(5,String.format("%016X",snowflake));
+		});
+	}
+	
+	/**
+	 * Write a generated mix function into the database.
+	 * @param mix mix to write
+	 */
+	public void submit(Mix64 mix) {
+		// determine ops in use
+		int operators = 0;
+		for (Mix64.MixEntry entry : mix.getOperands()) {
+			switch (entry.op()) {
+				case ADD: operators |= (1 << MixEntry.OP_ADD); break;
+				case XOR: operators |= (1 << MixEntry.OP_XOR); break;
+				case MUL: operators |= (1 << MixEntry.OP_MUL); break;
+				case ROL: operators |= (1 << MixEntry.OP_ROL); break;
+				case ROR: operators |= (1 << MixEntry.OP_ROR); break;
+				case XSL: operators |= (1 << MixEntry.OP_XSL); break;
+				case XSR: operators |= (1 << MixEntry.OP_XSR); break;
+			}
+		}
+		// get remaining properties
+		int operatorCount = mix.oplen();
+		String sourceCode = mix.toString();
+		// calculate avalanche
+		double avalancheScore = Avalanche64.scoreAvalanche(mix);
+		// make avalanche image and write it out
+		BufferedImage avalancheImage = Avalanche64.createAvalancheGraph(mix);
+		long snowflake = putImage(avalancheImage);
+		if (snowflake == 0) return; // image write failed
+		// make and write the database entry
+		final int finalOperators = operators; // for the later lambda expression
+		database.update("INSERT INTO mix64 (operators,operatorCount,avalancheScore,source,avalancheImageRef) VALUES (?,?,?,?,?)", pss -> {
 			pss.setInt(1,finalOperators);
 			pss.setInt(2,operatorCount);
 			pss.setDouble(3,avalancheScore);
