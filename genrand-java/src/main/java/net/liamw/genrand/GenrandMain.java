@@ -47,4 +47,9 @@ public class GenrandMain {
 		database.checkAndInitTables();
 		Gen64BitAddXorshift.run(database,64,0.2);
 	}
+	
+	public void runMix64C() {
+//		database.checkAndInitTables();
+		Gen64BitC.run(database,16,0.2);
+	}
 }

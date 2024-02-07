@@ -27,6 +27,6 @@ public class GenrandApplication implements CommandLineRunner {
 	 */
 	@Override
 	public void run(String... args) throws Exception {
-		genmain.runMix64();
+		genmain.runMix64C();
 	}
 }
