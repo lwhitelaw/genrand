@@ -4,70 +4,42 @@ import java.awt.image.BufferedImage;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Class for testing avalanche properties over 32 bit functions intended to be pseudorandom permutations.
- */
-public class Avalanche32 {
+public class AvalancheVector {
 	/**
-	 * The number of bits in a 32 bit value
+	 * Function interface for bit vector functions.
 	 */
-	public static final int BITS = 32;
-	
-	/**
-	 * Function interface for 32 bit functions.
-	 */
-	public static interface Diffuser {
+	public static interface DiffuserVector {
 		/**
-		 * Map a 32 bit value to another 32 bit value.
+		 * Map a bit value to another bit value. Don't modify the input.
 		 * @param input the input value
 		 * @return the output value
 		 */
-		public int diffuse(int input);
+		public BitVector diffuse(BitVector input);
 		
-		/**
-		 * Create a counter-based PRNG from this function.
-		 * @return a random number generator constructed from this function
-		 */
-		public default Random asRandom() {
-			return new Random() {
-				int c = LWRand64.threadLocal().nextInt(); // counter
-				
-				public void advance() {
-					c++;
-				}
-				
-				public int next(int bits) {
-					advance();
-					return mix(c) >>> (32 - bits);
-				}
-
-				private int mix(int c) {
-					return diffuse(c);
-				}
-			};
-		}
+		public int inputSize();
+		public int outputSize();
 	}
 	
 	/**
 	 * Perform an avalanche test on the given function for a given number of iterations and store the statistics into the given array.
-	 * @param flipStatistics the 32x32 array that statistics will be written into
+	 * @param flipStatistics the array that statistics will be written into
 	 * @param diffuser the function under test
 	 * @param iterations number of iterations to run the test for
 	 */
-	private static void doAvalancheTest(int[][] flipStatistics, Diffuser diffuser, int iterations) {
+	private static void doAvalancheTest(int[][] flipStatistics, DiffuserVector diffuser, int iterations) {
 		Random random = ThreadLocalRandom.current();
 		for (int i = 0; i < iterations; i++) {
 			// Start with a random integer x and find f(x).
-			int starting = random.nextInt();
-			int diffused = diffuser.diffuse(starting);
-			// For each of the 32 bit positions, try flipping the bit in that position.
-			for (int bitFlipped = 0; bitFlipped < BITS; bitFlipped++) {
+			BitVector starting = BitVector.random(random,diffuser.inputSize());
+			BitVector diffused = diffuser.diffuse(starting);
+			// For each of the possible bit positions, try flipping the bit in that position.
+			for (int bitFlipped = 0; bitFlipped < diffuser.inputSize(); bitFlipped++) {
 				// Determine what bits changed in f(x) when the given bit was flipped.
-				int res = testDiffuse(starting, bitFlipped, diffused, diffuser);
+				BitVector res = testDiffuse(starting, bitFlipped, diffused, diffuser);
 				// Check each bit in the output result to see if it flipped.
 				// Increment the appropriate input/output bit statistic in the array if it did.
-				for (int bitTested = 0; bitTested < BITS; bitTested++) {
-					if (testBit(res, bitTested)) {
+				for (int bitTested = 0; bitTested < diffuser.outputSize(); bitTested++) {
+					if (res.getBitAt(bitTested) != 0) {
 						flipStatistics[bitFlipped][bitTested]++;
 					}
 				}
@@ -78,18 +50,18 @@ public class Avalanche32 {
 	/**
 	 * Produce an avalanche graph for the given function.
 	 * @param diffuser the function under test
-	 * @return a 32x32 image showing how the bits flip
+	 * @return a 64x64 image showing how the bits flip
 	 */
-	public static BufferedImage createAvalancheGraph(Diffuser diffuser) {
-		final int[][] flipStatistics = new int[BITS][BITS];
+	public static BufferedImage createAvalancheGraph(DiffuserVector diffuser) {
+		final int[][] flipStatistics = new int[diffuser.inputSize()][diffuser.outputSize()];
 		final int ITERATIONS = 1 << 20;
-		BufferedImage bimg = new BufferedImage(BITS, BITS, BufferedImage.TYPE_INT_RGB);
+		BufferedImage bimg = new BufferedImage(diffuser.inputSize(),diffuser.outputSize(), BufferedImage.TYPE_INT_RGB);
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
 		// Write out the image
 		// For each row and column...
-		for (int i = 0; i < BITS; i++) {
-			for (int j = 0; j < BITS; j++) {
+		for (int i = 0; i < diffuser.inputSize(); i++) {
+			for (int j = 0; j < diffuser.outputSize(); j++) {
 				// i = input bit flipped, along the x
 				// j = output bit tested, along the y
 				// get the numerator (number of flips)
@@ -114,11 +86,8 @@ public class Avalanche32 {
 	 * @param diffuser the function under test
 	 * @return a value describing the avalanche performance of this function
 	 */
-	public static double scoreAvalanche(Diffuser diffuser) {
-		final int[][] flipStatistics = new int[BITS][BITS];
-		// More iterations mean a value closer to the real value, down to a noise floor beyond which values are meaningless
-		// 65536 iterations is a good tradeoff between accuracy/speed
-		// Noise floor -> 0.06 @ 65536 iters
+	public static double scoreAvalanche(DiffuserVector diffuser) {
+		final int[][] flipStatistics = new int[diffuser.inputSize()][diffuser.outputSize()];
 		final int ITERATIONS = 1 << 16;
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
@@ -126,8 +95,8 @@ public class Avalanche32 {
 		// Therefore, compare the observed values to this ideal 0.5.
 		// Effectively, we want to calculate the Pythagorean distance between two 32x32 value vectors.
 		double sum = 0.0;
-		for (int i = 0; i < BITS; i++) {
-			for (int j = 0; j < BITS; j++) {
+		for (int i = 0; i < diffuser.inputSize(); i++) {
+			for (int j = 0; j < diffuser.outputSize(); j++) {
 				// i = bit flipped
 				// j = bit tested
 				double num = flipStatistics[i][j];
@@ -146,26 +115,6 @@ public class Avalanche32 {
 	}
 	
 	/**
-	 * Flip the given bit in the input at the given bit position.
-	 * @param input the input to modify
-	 * @param which the bit to flip, from 0 to 31
-	 * @return the input with one flipped bit
-	 */
-	public static int flipBit(int input, int which) {
-		return input ^ (1 << which);
-	}
-	
-	/**
-	 * Return true if the given bit from 0-31 in the input is set.
-	 * @param input the input to test
-	 * @param which the bit to test
-	 * @return true if the given bit is set
-	 */
-	public static boolean testBit(int input, int which) {
-		return (input & (1 << which)) != 0;
-	}
-	
-	/**
 	 * Return what output bits changed based on the input when a given bit is flipped.
 	 * The diffused input is expected to match diffuser.diffuse(input).
 	 * @param input Input to test
@@ -174,8 +123,12 @@ public class Avalanche32 {
 	 * @param diffuser function to use
 	 * @return The bits that changed when the given bit was flipped
 	 */
-	private static int testDiffuse(int input, int whichBit, int diffusedInput, Diffuser diffuser) {
-		int flipped = diffuser.diffuse(flipBit(input, whichBit));
-		return diffusedInput ^ flipped;
+	public static BitVector testDiffuse(BitVector input, int whichBit, BitVector diffusedInput, DiffuserVector diffuser) {
+		BitVector flippedInput = input.dup();
+		flippedInput.flipBitAt(whichBit);
+		BitVector flippedDiffused = diffuser.diffuse(flippedInput);
+		BitVector xorDiffused = diffusedInput.dup();
+		xorDiffused.xor(flippedDiffused);
+		return xorDiffused;
 	}
 }

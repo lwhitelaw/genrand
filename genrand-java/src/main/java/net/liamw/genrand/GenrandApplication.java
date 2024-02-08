@@ -27,6 +27,9 @@ public class GenrandApplication implements CommandLineRunner {
 	 */
 	@Override
 	public void run(String... args) throws Exception {
-		genmain.runMix64C();
+//		genmain.runMix64C();
+		genmain.vectorTest();
+		System.out.println("done");
+		System.exit(0);
 	}
 }

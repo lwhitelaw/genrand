@@ -1,8 +1,8 @@
-package net.liamw.genrand.function;
+package net.liamw.genrand.function.arx;
 
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
 
-public class Mix32x2 implements Diffuser64 {
+public class MixARX32x2 implements Diffuser64 {
 	private final int a;
 	private final int b;
 	private final int c;
@@ -13,7 +13,7 @@ public class Mix32x2 implements Diffuser64 {
 	private final boolean xorc;
 	private final boolean xord;
 	
-	public Mix32x2(int a, int b, int c, int d, boolean xora, boolean xorb, boolean xorc, boolean xord) {
+	public MixARX32x2(int a, int b, int c, int d, boolean xora, boolean xorb, boolean xorc, boolean xord) {
 		this.a = a & 0x1F;
 		this.b = b & 0x1F;
 		this.c = c & 0x1F;
@@ -37,7 +37,7 @@ public class Mix32x2 implements Diffuser64 {
 		return v;
 	}
 	
-	public static Mix32x2 unpack(long v) {
+	public static MixARX32x2 unpack(long v) {
 		int d = (int)(v & 0x1FL); v = (v >>> 5);
 		int c = (int)(v & 0x1FL); v = (v >>> 5);
 		int b = (int)(v & 0x1FL); v = (v >>> 5);
@@ -46,7 +46,7 @@ public class Mix32x2 implements Diffuser64 {
 		boolean xorc = ((v & 0x1L) == 0x1L); v = (v >>> 1);
 		boolean xorb = ((v & 0x1L) == 0x1L); v = (v >>> 1);
 		boolean xora = ((v & 0x1L) == 0x1L); v = (v >>> 1);
-		return new Mix32x2(a, b, c, d, xora, xorb, xorc, xord);
+		return new MixARX32x2(a, b, c, d, xora, xorb, xorc, xord);
 	}
 
 	@Override
@@ -70,5 +70,15 @@ public class Mix32x2 implements Diffuser64 {
 	
 	private static int rot32(int v, int r) {
 		return Integer.rotateLeft(v, r);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(String.format(xora? "a ^= ROT32(b,%d);\n" : "a += ROT32(b,%d);\n", a));
+		sb.append(String.format(xorb? "b ^= ROT32(a,%d);\n" : "b += ROT32(a,%d);\n", b));
+		sb.append(String.format(xorc? "a ^= ROT32(b,%d);\n" : "a += ROT32(b,%d);\n", c));
+		sb.append(String.format(xord? "b ^= ROT32(a,%d);\n" : "b += ROT32(a,%d);\n", d));
+		return sb.toString();
 	}
 }

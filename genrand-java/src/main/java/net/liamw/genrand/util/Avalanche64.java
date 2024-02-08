@@ -1,14 +1,8 @@
 package net.liamw.genrand.util;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-
-import javax.imageio.ImageIO;
-
-import net.liamw.genrand.util.Avalanche32.Diffuser;
 
 /**
  * Class for testing avalanche properties over 64 bit functions intended to be pseudorandom permutations.
