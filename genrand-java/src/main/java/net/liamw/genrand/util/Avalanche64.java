@@ -25,7 +25,7 @@ public class Avalanche64 {
 		public long diffuse(long input);
 		
 		/**
-		 * Create a counter-based PRNG from this function.
+		 * Create a counter-based PRNG from this function. (If the function is less than 64 bit, this will not work)
 		 * @return a random number generator constructed from this function
 		 */
 		public default Random asRandom() {
@@ -62,7 +62,7 @@ public class Avalanche64 {
 		}
 		
 		/**
-		 * Create a chaotic PRNG from this function.
+		 * Create a chaotic PRNG from this function. (If the function is less than 64 bit, this will not work)
 		 * @return a random number generator constructed from this function
 		 */
 		public default Random asRandomChaotic() {
@@ -104,20 +104,21 @@ public class Avalanche64 {
 	 * @param flipStatistics the 64x64 array that statistics will be written into
 	 * @param diffuser the function under test
 	 * @param iterations number of iterations to run the test for
+	 * @param bits number of bits in the input/output
 	 */
-	private static void doAvalancheTest(int[][] flipStatistics, Diffuser64 diffuser, int iterations) {
+	private static void doAvalancheTest(int[][] flipStatistics, Diffuser64 diffuser, int iterations, int bits) {
 		Random random = ThreadLocalRandom.current();
 		for (int i = 0; i < iterations; i++) {
 			// Start with a random integer x and find f(x).
 			long starting = random.nextInt();
 			long diffused = diffuser.diffuse(starting);
 			// For each of the 32 bit positions, try flipping the bit in that position.
-			for (int bitFlipped = 0; bitFlipped < BITS; bitFlipped++) {
+			for (int bitFlipped = 0; bitFlipped < bits; bitFlipped++) {
 				// Determine what bits changed in f(x) when the given bit was flipped.
 				long res = testDiffuse(starting, bitFlipped, diffused, diffuser);
 				// Check each bit in the output result to see if it flipped.
 				// Increment the appropriate input/output bit statistic in the array if it did.
-				for (int bitTested = 0; bitTested < BITS; bitTested++) {
+				for (int bitTested = 0; bitTested < bits; bitTested++) {
 					if (testBit(res, bitTested)) {
 						flipStatistics[bitFlipped][bitTested]++;
 					}
@@ -129,18 +130,19 @@ public class Avalanche64 {
 	/**
 	 * Produce an avalanche graph for the given function.
 	 * @param diffuser the function under test
+	 * @param bits number of bits in the input/output
 	 * @return a 64x64 image showing how the bits flip
 	 */
-	public static BufferedImage createAvalancheGraph(Diffuser64 diffuser) {
-		final int[][] flipStatistics = new int[BITS][BITS];
+	public static BufferedImage createAvalancheGraph(Diffuser64 diffuser, int bits) {
+		final int[][] flipStatistics = new int[bits][bits];
 		final int ITERATIONS = 1 << 20;
-		BufferedImage bimg = new BufferedImage(BITS, BITS, BufferedImage.TYPE_INT_RGB);
+		BufferedImage bimg = new BufferedImage(bits, bits, BufferedImage.TYPE_INT_RGB);
 		// Run the test to gain statistics
-		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
+		doAvalancheTest(flipStatistics, diffuser, ITERATIONS, bits);
 		// Write out the image
 		// For each row and column...
-		for (int i = 0; i < BITS; i++) {
-			for (int j = 0; j < BITS; j++) {
+		for (int i = 0; i < bits; i++) {
+			for (int j = 0; j < bits; j++) {
 				// i = input bit flipped, along the x
 				// j = output bit tested, along the y
 				// get the numerator (number of flips)
@@ -163,19 +165,20 @@ public class Avalanche64 {
 	 * Test the function for avalanche and return a value describing its deviation from the ideal.
 	 * Values closer to zero mean better avalanching properties.
 	 * @param diffuser the function under test
+	 * @param bits number of bits in the input/output
 	 * @return a value describing the avalanche performance of this function
 	 */
-	public static double scoreAvalanche(Diffuser64 diffuser) {
-		final int[][] flipStatistics = new int[BITS][BITS];
+	public static double scoreAvalanche(Diffuser64 diffuser, int bits) {
+		final int[][] flipStatistics = new int[bits][bits];
 		final int ITERATIONS = 1 << 16;
 		// Run the test to gain statistics
-		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);
+		doAvalancheTest(flipStatistics, diffuser, ITERATIONS, bits);
 		// The ideal is every output bit has a 50% chance of flipping when any input bit is flipped
 		// Therefore, compare the observed values to this ideal 0.5.
 		// Effectively, we want to calculate the Pythagorean distance between two 32x32 value vectors.
 		double sum = 0.0;
-		for (int i = 0; i < BITS; i++) {
-			for (int j = 0; j < BITS; j++) {
+		for (int i = 0; i < bits; i++) {
+			for (int j = 0; j < bits; j++) {
 				// i = bit flipped
 				// j = bit tested
 				double num = flipStatistics[i][j];

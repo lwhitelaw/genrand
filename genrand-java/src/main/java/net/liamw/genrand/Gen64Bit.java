@@ -16,14 +16,14 @@ public class Gen64Bit {
 			// Create new mix with one addition operation to start with and score it
 			Mix64 best = new Mix64();
 			best.addRandom(Operand.ADD);
-			double bestScore = Avalanche64.scoreAvalanche(best);
+			double bestScore = Avalanche64.scoreAvalanche(best,64);
 			// Print
 			System.out.printf("Current: %f\n%s\n",bestScore,best.toString());
 			// Begin trials
 			while (bestScore > threshold) {
 				// Add a random operator and score it
 				best.addRandom(types);
-				bestScore = Avalanche64.scoreAvalanche(best);
+				bestScore = Avalanche64.scoreAvalanche(best,64);
 				System.out.printf("Adding an operator and rescored: %f\n%s\n",bestScore,best.toString());
 				// Begin optimisation attempts
 				int attempts = optimiseRounds;
@@ -32,7 +32,7 @@ public class Gen64Bit {
 					// Copy the mix and modify one operator
 					Mix64 copy = new Mix64(best);
 					copy.replaceRandom(types);
-					double copyScore = Avalanche64.scoreAvalanche(copy);
+					double copyScore = Avalanche64.scoreAvalanche(copy,64);
 					// If it is better, save it and restart the attempt counter
 					if (copyScore < bestScore) {
 						best = copy;

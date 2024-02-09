@@ -225,9 +225,9 @@ public class Database {
 		int operatorCount = mix.oplen();
 		String sourceCode = mix.toString();
 		// calculate avalanche
-		double avalancheScore = Avalanche32.scoreAvalanche(mix);
+		double avalancheScore = Avalanche32.scoreAvalanche(mix,32);
 		// make avalanche image and write it out
-		BufferedImage avalancheImage = Avalanche32.createAvalancheGraph(mix);
+		BufferedImage avalancheImage = Avalanche32.createAvalancheGraph(mix,32);
 		long snowflake = putImage(avalancheImage);
 		if (snowflake == 0) return; // image write failed
 		// make and write the database entry
@@ -263,9 +263,9 @@ public class Database {
 		int operatorCount = mix.oplen();
 		String sourceCode = mix.toString();
 		// calculate avalanche
-		double avalancheScore = Avalanche64.scoreAvalanche(mix);
+		double avalancheScore = Avalanche64.scoreAvalanche(mix,64);
 		// make avalanche image and write it out
-		BufferedImage avalancheImage = Avalanche64.createAvalancheGraph(mix);
+		BufferedImage avalancheImage = Avalanche64.createAvalancheGraph(mix,64);
 		long snowflake = putImage(avalancheImage);
 		if (snowflake == 0) return; // image write failed
 		// make and write the database entry

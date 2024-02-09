@@ -2,17 +2,33 @@ package net.liamw.genrand.function.arx;
 
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
 
+/**
+ * Mixing function using 4 add/xor Feistel-like operations on rotated values.
+ */
 public class MixARX32x2 implements Diffuser64 {
+	// Rotation constants
 	private final int a;
 	private final int b;
 	private final int c;
 	private final int d;
 	
+	// Whether the operation is xor (true) or add (false)
 	private final boolean xora;
 	private final boolean xorb;
 	private final boolean xorc;
 	private final boolean xord;
 	
+	/**
+	 * Construct a function with all parameters given explictly
+	 * @param a Rotation A
+	 * @param b Rotation B
+	 * @param c Rotation C
+	 * @param d Rotation D
+	 * @param xora Operator A is XOR
+	 * @param xorb Operator B is XOR
+	 * @param xorc Operator C is XOR
+	 * @param xord Operator D is XOR
+	 */
 	public MixARX32x2(int a, int b, int c, int d, boolean xora, boolean xorb, boolean xorc, boolean xord) {
 		this.a = a & 0x1F;
 		this.b = b & 0x1F;
@@ -24,6 +40,10 @@ public class MixARX32x2 implements Diffuser64 {
 		this.xord = xord;
 	}
 	
+	/**
+	 * Pack parameters in to a long that describes this mix function
+	 * @return packed long describing this function.
+	 */
 	public long pack() {
 		long v = 0;
 		v = (v << 1) | (xora? 1L : 0L);
@@ -37,6 +57,11 @@ public class MixARX32x2 implements Diffuser64 {
 		return v;
 	}
 	
+	/**
+	 * Unpack a long into a new mix function.
+	 * @param v value to unpack
+	 * @return a mix function from the packed long
+	 */
 	public static MixARX32x2 unpack(long v) {
 		int d = (int)(v & 0x1FL); v = (v >>> 5);
 		int c = (int)(v & 0x1FL); v = (v >>> 5);
@@ -54,6 +79,12 @@ public class MixARX32x2 implements Diffuser64 {
 		return diffuse(input,1);
 	}
 	
+	/**
+	 * Perform diffuse operation for given number of rounds.
+	 * @param input the input value
+	 * @param rounds number of times to run through the operations
+	 * @return the output value
+	 */
 	public long diffuse(long input, int rounds) {
 		int v1 = (int)(input >>> 32);
 		int v2 = (int)(input & 0xFFFFFFFFL);

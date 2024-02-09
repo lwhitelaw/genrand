@@ -17,14 +17,14 @@ public class Gen32BitAddXorshift {
 			// Create new mix with one addition operation and random xorshift to start with and score it
 			Mix32 best = new Mix32();
 			addRandomAddXorshift(best);
-			double bestScore = Avalanche32.scoreAvalanche(best);
+			double bestScore = Avalanche32.scoreAvalanche(best,32);
 			// Print
 			System.out.printf("Current: %f\n%s\n",bestScore,best.toString());
 			// Begin trials
 			while (bestScore > threshold) {
 				// Add a random operator and score it
 				addRandomAddXorshift(best);
-				bestScore = Avalanche32.scoreAvalanche(best);
+				bestScore = Avalanche32.scoreAvalanche(best,32);
 				System.out.printf("Adding an operator and rescored: %f\n%s\n",bestScore,best.toString());
 				// Begin optimisation attempts
 				int attempts = optimiseRounds;
@@ -33,7 +33,7 @@ public class Gen32BitAddXorshift {
 					// Copy the mix and modify one operator
 					Mix32 copy = new Mix32(best);
 					replaceRandomAddXorshift(copy);
-					double copyScore = Avalanche32.scoreAvalanche(copy);
+					double copyScore = Avalanche32.scoreAvalanche(copy,32);
 					// If it is better, save it and restart the attempt counter
 					if (copyScore < bestScore) {
 						best = copy;
