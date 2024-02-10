@@ -7,15 +7,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import net.liamw.genrand.function.Mix32;
 import net.liamw.genrand.function.Mix64;
+import net.liamw.genrand.function.arx.MixARX32x2;
 
 /**
  * Code to manipulate the database where found mixers are held.
@@ -170,6 +178,114 @@ public class Database {
 		}
 	}
 	
+	public static class ARXMixEntry {
+		private final String type;
+		private final long definition;
+		private final double avScore1;
+		private final double avScore2;
+		private final double avScore3;
+		private final double avScore4;
+		private final String avImage1;
+		private final String avImage2;
+		private final String avImage3;
+		private final String avImage4;
+		
+		public ARXMixEntry(String type, long definition, double avScore1, double avScore2, double avScore3,
+				double avScore4, String avImage1, String avImage2, String avImage3, String avImage4) {
+			this.type = type;
+			this.definition = definition;
+			this.avScore1 = avScore1;
+			this.avScore2 = avScore2;
+			this.avScore3 = avScore3;
+			this.avScore4 = avScore4;
+			this.avImage1 = avImage1;
+			this.avImage2 = avImage2;
+			this.avImage3 = avImage3;
+			this.avImage4 = avImage4;
+		}
+		
+		public static ARXMixEntry fromDatabaseRowMapper(ResultSet mapper, int rowId) throws SQLException {
+			String id = mapper.getString("type");
+			long definition = mapper.getLong("definition");
+			double avScore1 = mapper.getDouble("avScore1");
+			double avScore2 = mapper.getDouble("avScore2");
+			double avScore3 = mapper.getDouble("avScore3");
+			double avScore4 = mapper.getDouble("avScore4");
+			String avImage1 = mapper.getString("avImage1");
+			String avImage2 = mapper.getString("avImage2");
+			String avImage3 = mapper.getString("avImage3");
+			String avImage4 = mapper.getString("avImage4");
+			return new ARXMixEntry(id, definition, avScore1, avScore2, avScore3, avScore4, avImage1, avImage2, avImage3, avImage4);
+		}
+		
+		/**
+		 * @return the type
+		 */
+		public final String getType() {
+			return type;
+		}
+		/**
+		 * @return the definition
+		 */
+		public final long getDefinition() {
+			return definition;
+		}
+		/**
+		 * @return the avScore1
+		 */
+		public final double getAvScore1() {
+			return avScore1;
+		}
+		/**
+		 * @return the avScore2
+		 */
+		public final double getAvScore2() {
+			return avScore2;
+		}
+		/**
+		 * @return the avScore3
+		 */
+		public final double getAvScore3() {
+			return avScore3;
+		}
+		/**
+		 * @return the avScore4
+		 */
+		public final double getAvScore4() {
+			return avScore4;
+		}
+		/**
+		 * @return the avImage1
+		 */
+		public final String getAvImage1() {
+			return avImage1;
+		}
+		/**
+		 * @return the avImage2
+		 */
+		public final String getAvImage2() {
+			return avImage2;
+		}
+		/**
+		 * @return the avImage3
+		 */
+		public final String getAvImage3() {
+			return avImage3;
+		}
+		/**
+		 * @return the avImage4
+		 */
+		public final String getAvImage4() {
+			return avImage4;
+		}
+	}
+	
+	public List<ARXMixEntry> getARX32x2ByDefinition(long def) {
+		return database.query("SELECT * FROM mixarx WHERE type = '32x2' AND definition = ?", pss -> {
+			pss.setLong(1, def);
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
 	private static final Path IMAGE_PATH = Paths.get("./images/");
 	
 	@Autowired
@@ -179,6 +295,7 @@ public class Database {
 	 * Create the initial tables.
 	 */
 	public void checkAndInitTables() {
+		// Normal tables
 		database.execute("""
 				CREATE TABLE IF NOT EXISTS mix32 (
 					identifier INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -199,6 +316,29 @@ public class Database {
 					practRandScore INTEGER,
 					source TEXT NOT NULL,
 					avalancheImageRef TEXT
+				)
+				""");
+		// ARX tables
+		database.execute("""
+				CREATE TABLE IF NOT EXISTS mixarx (
+					type TEXT NOT NULL,
+					definition INTEGER NOT NULL,
+					avScore1 REAL NOT NULL,
+					avScore2 REAL NOT NULL,
+					avScore3 REAL NOT NULL,
+					avScore4 REAL NOT NULL,
+					avImage1 TEXT,
+					avImage2 TEXT,
+					avImage3 TEXT,
+					avImage4 TEXT,
+					PRIMARY KEY (type,definition)
+				)
+				""");
+		// ARX search status
+		database.execute("""
+				CREATE TABLE IF NOT EXISTS arxsearch (
+					type TEXT NOT NULL PRIMARY KEY,
+					checkpoint INTEGER NOT NULL
 				)
 				""");
 	}
@@ -279,6 +419,66 @@ public class Database {
 		});
 	}
 	
+	/**
+	 * Write a generated mix function into the database.
+	 * @param mix mix to write
+	 */
+	public void submit(MixARX32x2 mix) {
+		// pack into long value
+		long definition = mix.pack();
+		// score avalanche functions for 1 to 4 rounds
+		double av1 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,1),64);
+		System.out.printf("1 round... %f\n",av1);
+		double av2 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,2),64);
+		System.out.printf("2 round... %f\n",av2);
+		double av3 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,3),64);
+		System.out.printf("3 round... %f\n",av3);
+		double av4 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,4),64);
+		System.out.printf("4 round... %f\n",av4);
+		// make avalanche graphs for the same - if any fail, they'll be zero. This is fine. It'll be made null later.
+		long avImageSnowflake1 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,1),64));
+		long avImageSnowflake2 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,2),64));
+		long avImageSnowflake3 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,3),64));
+		long avImageSnowflake4 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,4),64));
+		System.out.printf("Images done...\n");
+		// Write out into database
+		try {
+			database.update("INSERT INTO mixarx (type,definition,avScore1,avScore2,avScore3,avScore4,avImage1,avImage2,avImage3,avImage4) VALUES (?,?,?,?,?,?,?,?,?,?)", pss -> {
+				pss.setString(1,"32x2");
+				pss.setLong(2,definition);
+				
+				pss.setDouble(3,av1);
+				pss.setDouble(4,av2);
+				pss.setDouble(5,av3);
+				pss.setDouble(6,av4);
+				
+				if (avImageSnowflake1 == 0) {
+					pss.setNull(7,Types.VARCHAR);
+				} else {
+					pss.setString(7,String.format("%016X",avImageSnowflake1));
+				}
+				if (avImageSnowflake2 == 0) {
+					pss.setNull(8,Types.VARCHAR);
+				} else {
+					pss.setString(8,String.format("%016X",avImageSnowflake2));
+				}
+				if (avImageSnowflake3 == 0) {
+					pss.setNull(9,Types.VARCHAR);
+				} else {
+					pss.setString(9,String.format("%016X",avImageSnowflake3));
+				}
+				if (avImageSnowflake4 == 0) {
+					pss.setNull(10,Types.VARCHAR);
+				} else {
+					pss.setString(10,String.format("%016X",avImageSnowflake4));
+				}
+			});
+		} catch (DataAccessException ex) {
+			System.out.println("Insertion into database failed for arx32x32 type " + definition);
+			ex.printStackTrace(System.out);
+		}
+	}
+	
 	private static long putImage(BufferedImage image) {
 		long snowflake = Snowflake.generate();
 		Path path = IMAGE_PATH.resolve(String.format("%03X",mix12bit(snowflake)));
@@ -300,5 +500,38 @@ public class Database {
 		v *= 0xFB7719182775D593L;
 		v ^= v >>> 21;
 		return (int)(v & 0xFFFL);
+	}
+	
+	public long getCheckpoint(String ident) {
+		return database.query("SELECT checkpoint FROM arxsearch WHERE type = ?", pss -> pss.setString(1,ident), rse -> {
+			boolean hasRow = rse.next();
+			if (!hasRow) return 0L;
+			long v = rse.getLong(1);
+			if (rse.wasNull()) return 0L;
+			return v;
+		});
+	}
+	
+	@Transactional
+	public void setCheckpoint(String ident, long value) {
+		// Don't allow values < 1
+		if (value < 1) return;
+		// Check to see if checkpoint is set
+		long originalValue = getCheckpoint(ident);
+		if (originalValue == 0) {
+			// Value not set. Needs to insert value.
+			database.update("INSERT INTO arxsearch (type,checkpoint) VALUES (?,?)", pss -> {
+				pss.setString(1, ident);
+				pss.setLong(2, value);
+			});
+			System.out.println("Inserted value");
+		} else {
+			// Value is set. Update instead.
+			database.update("UPDATE arxsearch SET checkpoint = ? WHERE type = ?", pss -> {
+				pss.setLong(1, value);
+				pss.setString(2, ident);
+			});
+			System.out.println("Set value");
+		}
 	}
 }

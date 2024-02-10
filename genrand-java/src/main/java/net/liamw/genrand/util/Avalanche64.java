@@ -135,7 +135,7 @@ public class Avalanche64 {
 	 */
 	public static BufferedImage createAvalancheGraph(Diffuser64 diffuser, int bits) {
 		final int[][] flipStatistics = new int[bits][bits];
-		final int ITERATIONS = 1 << 20;
+		final int ITERATIONS = 1 << 16;
 		BufferedImage bimg = new BufferedImage(bits, bits, BufferedImage.TYPE_INT_RGB);
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS, bits);

@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import net.liamw.genrand.function.arx.MixARX32x2;
 import net.liamw.genrand.util.AvalancheVector;
 import net.liamw.genrand.util.AvalancheVector.DiffuserVector;
 import net.liamw.genrand.util.BitVector;
@@ -43,6 +44,10 @@ public class GenrandMain {
 //			System.out.println(row);
 //		}
 //	}
+	public void runMixers() {
+		database.checkAndInitTables();
+		MixARX32x2.generateInNewThread(database);
+	}
 
 	public void runMix32() {
 		database.checkAndInitTables();
@@ -55,7 +60,7 @@ public class GenrandMain {
 	}
 	
 	public void runMix64C() {
-//		database.checkAndInitTables();
+		database.checkAndInitTables();
 		Gen64BitC.run(database,16,0.2);
 	}
 	

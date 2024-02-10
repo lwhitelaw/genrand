@@ -54,7 +54,7 @@ public class AvalancheVector {
 	 */
 	public static BufferedImage createAvalancheGraph(DiffuserVector diffuser) {
 		final int[][] flipStatistics = new int[diffuser.inputSize()][diffuser.outputSize()];
-		final int ITERATIONS = 1 << 20;
+		final int ITERATIONS = 1 << 16;
 		BufferedImage bimg = new BufferedImage(diffuser.inputSize(),diffuser.outputSize(), BufferedImage.TYPE_INT_RGB);
 		// Run the test to gain statistics
 		doAvalancheTest(flipStatistics, diffuser, ITERATIONS);

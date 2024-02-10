@@ -1,6 +1,8 @@
 package net.liamw.genrand.function.arx;
 
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
+import net.liamw.genrand.util.CounterPermutation;
+import net.liamw.genrand.util.Database;
 
 /**
  * Mixing function using 4 add/xor Feistel-like operations on rotated values.
@@ -111,5 +113,26 @@ public class MixARX32x2 implements Diffuser64 {
 		sb.append(String.format(xorc? "a ^= ROT32(b,%d);\n" : "a += ROT32(b,%d);\n", c));
 		sb.append(String.format(xord? "b ^= ROT32(a,%d);\n" : "b += ROT32(a,%d);\n", d));
 		return sb.toString();
+	}
+	
+	public static void generateInNewThread(Database database) {
+		final int start = (int) database.getCheckpoint("32x2");
+		final int LIMIT = (1 << 24);
+		Thread t = new Thread(() -> {
+			try {
+				int c = start;
+				while (c < LIMIT) {
+					System.out.println("Try " + c + " of " + LIMIT);
+					MixARX32x2 mix = unpack(CounterPermutation.permute32(c,LIMIT) & 0xFFFFFFFFL);
+					database.submit(mix);
+					c++;
+					database.setCheckpoint("32x2",c);
+				}
+			} catch (RuntimeException ex) {
+				ex.printStackTrace();
+			}
+		});
+		t.setName("ARX32x2 Gen Thread");
+		t.start();
 	}
 }
