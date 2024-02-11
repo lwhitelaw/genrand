@@ -64,4 +64,12 @@ public class CounterPermutation {
 		v += 0xCAC96BEA9B351A4AL; v ^= v << 23;
 		return v;
 	}
+	
+	public static long permute(long v, long limit) {
+		if (limit > Integer.MAX_VALUE) {
+			return permute64(v, limit);
+		} else {
+			return permute32((int)v, (int)limit) & 0xFFFFFFFFL;
+		}
+	}
 }

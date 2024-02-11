@@ -9,6 +9,8 @@ import javax.imageio.ImageIO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import net.liamw.genrand.function.arx.ARXMix;
+import net.liamw.genrand.function.arx.ARXMixInfo;
 import net.liamw.genrand.function.arx.MixARX32x2;
 import net.liamw.genrand.util.AvalancheVector;
 import net.liamw.genrand.util.AvalancheVector.DiffuserVector;
@@ -46,7 +48,7 @@ public class GenrandMain {
 //	}
 	public void runMixers() {
 		database.checkAndInitTables();
-		MixARX32x2.generateInNewThread(database);
+		ARXMix.generateInNewThread(database,MixARX32x2.INFO);
 	}
 
 	public void runMix32() {
@@ -113,5 +115,12 @@ public class GenrandMain {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void unpackTest() {
+		MixARX32x2 mix = ARXMix.unpack(MixARX32x2.class, 1000);
+		System.out.println("It worked: " + mix);
+		mix = ARXMix.unpack(MixARX32x2.class, 1000);
+		System.out.println("It worked: " + mix);
 	}
 }

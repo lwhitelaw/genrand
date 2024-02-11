@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import net.liamw.genrand.function.Mix32;
 import net.liamw.genrand.function.Mix64;
+import net.liamw.genrand.function.arx.ARXMix;
 import net.liamw.genrand.function.arx.MixARX32x2;
 
 /**
@@ -423,28 +424,28 @@ public class Database {
 	 * Write a generated mix function into the database.
 	 * @param mix mix to write
 	 */
-	public void submit(MixARX32x2 mix) {
+	public void submit(ARXMix<?> mix) {
 		// pack into long value
 		long definition = mix.pack();
 		// score avalanche functions for 1 to 4 rounds
-		double av1 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,1),64);
+		double av1 = mix.score(1);
 		System.out.printf("1 round... %f\n",av1);
-		double av2 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,2),64);
+		double av2 = mix.score(2);
 		System.out.printf("2 round... %f\n",av2);
-		double av3 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,3),64);
+		double av3 = mix.score(3);
 		System.out.printf("3 round... %f\n",av3);
-		double av4 = Avalanche64.scoreAvalanche(v -> mix.diffuse(v,4),64);
+		double av4 = mix.score(4);
 		System.out.printf("4 round... %f\n",av4);
 		// make avalanche graphs for the same - if any fail, they'll be zero. This is fine. It'll be made null later.
-		long avImageSnowflake1 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,1),64));
-		long avImageSnowflake2 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,2),64));
-		long avImageSnowflake3 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,3),64));
-		long avImageSnowflake4 = putImage(Avalanche64.createAvalancheGraph(v -> mix.diffuse(v,4),64));
+		long avImageSnowflake1 = putImage(mix.graph(1));
+		long avImageSnowflake2 = putImage(mix.graph(2));
+		long avImageSnowflake3 = putImage(mix.graph(3));
+		long avImageSnowflake4 = putImage(mix.graph(4));
 		System.out.printf("Images done...\n");
 		// Write out into database
 		try {
 			database.update("INSERT INTO mixarx (type,definition,avScore1,avScore2,avScore3,avScore4,avImage1,avImage2,avImage3,avImage4) VALUES (?,?,?,?,?,?,?,?,?,?)", pss -> {
-				pss.setString(1,"32x2");
+				pss.setString(1,mix.getInfo().getDatabaseTag());
 				pss.setLong(2,definition);
 				
 				pss.setDouble(3,av1);

@@ -1,5 +1,8 @@
 package net.liamw.genrand.function.arx;
 
+import java.awt.image.BufferedImage;
+
+import net.liamw.genrand.util.Avalanche64;
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
 import net.liamw.genrand.util.CounterPermutation;
 import net.liamw.genrand.util.Database;
@@ -7,7 +10,9 @@ import net.liamw.genrand.util.Database;
 /**
  * Mixing function using 4 add/xor Feistel-like operations on rotated values.
  */
-public class MixARX32x2 implements Diffuser64 {
+public class MixARX32x2 implements Diffuser64, ARXMix<MixARX32x2> {
+	public static final ARXMixInfo<MixARX32x2> INFO = new ARXMixInfo<MixARX32x2>("32x2", 24, MixARX32x2::unpack);
+	
 	// Rotation constants
 	private final int a;
 	private final int b;
@@ -75,6 +80,18 @@ public class MixARX32x2 implements Diffuser64 {
 		boolean xora = ((v & 0x1L) == 0x1L); v = (v >>> 1);
 		return new MixARX32x2(a, b, c, d, xora, xorb, xorc, xord);
 	}
+	
+	public ARXMixInfo<MixARX32x2> getInfo() {
+		return INFO;
+	}
+	
+	public double score(int rounds) {
+		return Avalanche64.scoreAvalanche(v -> diffuse(v,rounds),64);
+	}
+	
+	public BufferedImage graph(int rounds) {
+		return Avalanche64.createAvalancheGraph(v -> diffuse(v,rounds),64);
+	}
 
 	@Override
 	public long diffuse(long input) {
@@ -113,26 +130,5 @@ public class MixARX32x2 implements Diffuser64 {
 		sb.append(String.format(xorc? "a ^= ROT32(b,%d);\n" : "a += ROT32(b,%d);\n", c));
 		sb.append(String.format(xord? "b ^= ROT32(a,%d);\n" : "b += ROT32(a,%d);\n", d));
 		return sb.toString();
-	}
-	
-	public static void generateInNewThread(Database database) {
-		final int start = (int) database.getCheckpoint("32x2");
-		final int LIMIT = (1 << 24);
-		Thread t = new Thread(() -> {
-			try {
-				int c = start;
-				while (c < LIMIT) {
-					System.out.println("Try " + c + " of " + LIMIT);
-					MixARX32x2 mix = unpack(CounterPermutation.permute32(c,LIMIT) & 0xFFFFFFFFL);
-					database.submit(mix);
-					c++;
-					database.setCheckpoint("32x2",c);
-				}
-			} catch (RuntimeException ex) {
-				ex.printStackTrace();
-			}
-		});
-		t.setName("ARX32x2 Gen Thread");
-		t.start();
 	}
 }
