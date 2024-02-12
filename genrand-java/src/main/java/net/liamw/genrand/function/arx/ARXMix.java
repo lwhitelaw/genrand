@@ -18,11 +18,36 @@ import java.lang.invoke.VolatileCallSite;
  * @param <T> Type of the mix
  */
 public interface ARXMix<T extends ARXMix<T>> {
+	/**
+	 * Pack this mix into a 64-bit value that defines it. Note that not all bits may be in use.
+	 * See {@link ARXMixInfo#getDefinitionBits()} to determine how many bits are valid.
+	 * @return a packed representation of this mix.
+	 */
 	long pack();
+	
+	/**
+	 * Get info on this mix.
+	 */
 	ARXMixInfo<T> getInfo();
+	
+	/**
+	 * Score this mix for a given number of rounds.
+	 */
 	double score(int rounds);
+	
+	/**
+	 * Generate an avalanche graph for this mix for a given number of rounds.
+	 */
 	BufferedImage graph(int rounds);
 	
+	/**
+	 * Generically unpack any mix based on the class type by reflectively invoking its static unpack method.
+	 * An exception will be thrown if the mix does not have the static unpack method.
+	 * @param <T> Type of the mix
+	 * @param type the class type of the mix
+	 * @param value the value to unpack
+	 * @return a mix unpacked from the given value.
+	 */
 	public static <T extends ARXMix<T>> T unpack(Class<T> type, long value) {
 		try {
 			return (T) StaticCaller.INVOKER.invokeExact(type,value);
@@ -31,6 +56,13 @@ public interface ARXMix<T extends ARXMix<T>> {
 		}
 	}
 	
+	/**
+	 * Start a thread to generate and write mix combinations to the database. This method returns immediately.
+	 * The started thread only terminates once all combinations have been enumerated.
+	 * @param <T> Type to generate
+	 * @param database handle to database API
+	 * @param type type to generate.
+	 */
 	public static <T extends ARXMix<T>> void generateInNewThread(Database database, ARXMixInfo<T> type) {
 		final long START = database.getCheckpoint(type.getDatabaseTag());
 		final long LIMIT = (1 << type.getDefinitionBits());

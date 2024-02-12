@@ -11,6 +11,9 @@ import net.liamw.genrand.util.Database;
  * Mixing function using 4 add/xor Feistel-like operations on rotated values.
  */
 public class MixARX32x2 implements Diffuser64, ARXMix<MixARX32x2> {
+	/**
+	 * Info on this mix.
+	 */
 	public static final ARXMixInfo<MixARX32x2> INFO = new ARXMixInfo<MixARX32x2>("32x2", 24, MixARX32x2::unpack);
 	
 	// Rotation constants
@@ -81,14 +84,17 @@ public class MixARX32x2 implements Diffuser64, ARXMix<MixARX32x2> {
 		return new MixARX32x2(a, b, c, d, xora, xorb, xorc, xord);
 	}
 	
+	@Override
 	public ARXMixInfo<MixARX32x2> getInfo() {
 		return INFO;
 	}
 	
+	@Override
 	public double score(int rounds) {
 		return Avalanche64.scoreAvalanche(v -> diffuse(v,rounds),64);
 	}
 	
+	@Override
 	public BufferedImage graph(int rounds) {
 		return Avalanche64.createAvalancheGraph(v -> diffuse(v,rounds),64);
 	}
