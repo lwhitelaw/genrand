@@ -7,6 +7,9 @@ import net.liamw.genrand.util.Avalanche64;
 import net.liamw.genrand.util.AvalancheVector;
 import net.liamw.genrand.util.BitVector;
 
+/**
+ * Mixing function using 4 add/xor Feistel-like operations on rotated values.
+ */
 public class MixARX64x2 implements DiffuserVector, ARXMix<MixARX64x2> {
 	/**
 	 * Info on this mix.
