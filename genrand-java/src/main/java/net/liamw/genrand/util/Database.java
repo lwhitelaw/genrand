@@ -583,6 +583,9 @@ public class Database {
 		database.update("DELETE FROM mixarx WHERE type = ?", pss -> {
 			pss.setString(1, type);
 		});
-//		System.out.println("Done");
+		System.out.println("Resetting checkpoint");
+		database.update("DELETE FROM arxsearch WHERE type = ?", pss -> {
+			pss.setString(1, type);
+		});
 	}
 }

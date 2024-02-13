@@ -51,7 +51,7 @@ public class GenrandMain {
 //	}
 	public void runMixers() {
 		database.checkAndInitTables();
-//		database.clearARXTable("64x2");
+		database.clearARXTable("64x2");
 		ARXMix.generateInNewThread(database,MixARX64x2.INFO);
 	}
 
