@@ -482,14 +482,19 @@ public class Database {
 	
 	private static long putImage(BufferedImage image) {
 		long snowflake = Snowflake.generate();
-		Path path = IMAGE_PATH.resolve(String.format("%03X",mix12bit(snowflake)));
 		try {
-			Files.createDirectories(path);
-			ImageIO.write(image, "PNG", path.resolve(String.format("%016X.png",snowflake)).toFile());
+			Path path = snowflakeToPath(snowflake);
+			ImageIO.write(image, "PNG", path.toFile());
 		} catch (IOException ex) {
 			return 0;
 		}
 		return snowflake;
+	}
+	
+	private static Path snowflakeToPath(long snowflake) throws IOException {
+		Path dirPath = IMAGE_PATH.resolve(String.format("%03X",mix12bit(snowflake)));
+		Files.createDirectories(dirPath);
+		return dirPath.resolve(String.format("%016X.png",snowflake));
 	}
 	
 	private static int mix12bit(long v) {
@@ -534,5 +539,50 @@ public class Database {
 			});
 			System.out.println("Set value");
 		}
+	}
+	
+	public void clearARXTable(String type) {
+		List<ARXMixEntry> list = database.query("SELECT * FROM mixarx WHERE type = ?", pss -> {
+			pss.setString(1, type);
+		}, ARXMixEntry::fromDatabaseRowMapper);
+		for (ARXMixEntry mix : list) {
+			try {
+				Path p1 = snowflakeToPath(Long.parseLong(mix.getAvImage1(),16));
+				System.out.println("Deleting " + p1);
+				Files.delete(p1);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				Path p2 = snowflakeToPath(Long.parseLong(mix.getAvImage2(),16));
+				System.out.println("Deleting " + p2);
+				Files.delete(p2);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				Path p3 = snowflakeToPath(Long.parseLong(mix.getAvImage3(),16));
+				System.out.println("Deleting " + p3);
+				Files.delete(p3);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				Path p4 = snowflakeToPath(Long.parseLong(mix.getAvImage4(),16));
+				System.out.println("Deleting " + p4);
+				Files.delete(p4);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("Clearing " + type);
+		// Clear database
+		database.update("DELETE FROM mixarx WHERE type = ?", pss -> {
+			pss.setString(1, type);
+		});
+//		System.out.println("Done");
 	}
 }

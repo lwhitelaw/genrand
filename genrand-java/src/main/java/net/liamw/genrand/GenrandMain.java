@@ -11,8 +11,10 @@ import org.springframework.stereotype.Component;
 
 import net.liamw.genrand.function.arx.ARXMix;
 import net.liamw.genrand.function.arx.ARXMixInfo;
+import net.liamw.genrand.function.arx.MixARX16x2;
 import net.liamw.genrand.function.arx.MixARX32x2;
 import net.liamw.genrand.function.arx.MixARX64x2;
+import net.liamw.genrand.function.arx.MixARX8x2;
 import net.liamw.genrand.util.AvalancheVector;
 import net.liamw.genrand.util.AvalancheVector.DiffuserVector;
 import net.liamw.genrand.util.BitVector;
@@ -49,6 +51,7 @@ public class GenrandMain {
 //	}
 	public void runMixers() {
 		database.checkAndInitTables();
+//		database.clearARXTable("64x2");
 		ARXMix.generateInNewThread(database,MixARX64x2.INFO);
 	}
 
