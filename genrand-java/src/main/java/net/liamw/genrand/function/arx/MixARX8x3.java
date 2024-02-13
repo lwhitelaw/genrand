@@ -9,10 +9,16 @@ import net.liamw.genrand.util.Avalanche32.Diffuser;
  * Mixing function using 6 add/xor Feistel-like operations on rotated values iterating through 3 terms.
  */
 public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
+	private static final int ROT_BITS = 3; // bits needed to define a rotation
+	private static final int ROT_MASK = (1 << ROT_BITS) - 1; // bit mask for rotation constants
+	private static final long ROT_MASK_LONG = (long) ROT_MASK; // long version
+	private static final int TERMS = 3; // terms in use
+	private static final int DEFINITION_BITS = 2 * TERMS * (1 + ROT_BITS);
+	
 	/**
 	 * Info on this mix.
 	 */
-	public static final ARXMixInfo<MixARX8x3> INFO = new ARXMixInfo<MixARX8x3>("8x3", 24, MixARX8x3::unpack);
+	public static final ARXMixInfo<MixARX8x3> INFO = new ARXMixInfo<MixARX8x3>("8x3", DEFINITION_BITS, MixARX8x3::unpack);
 	
 	// Rotation constants
 	private final int a;
@@ -46,12 +52,12 @@ public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
 	 * @param xorf Operator F is XOR
 	 */
 	public MixARX8x3(int a, int b, int c, int d, int e, int f, boolean xora, boolean xorb, boolean xorc, boolean xord, boolean xore, boolean xorf) {
-		this.a = a & 0x07;
-		this.b = b & 0x07;
-		this.c = c & 0x07;
-		this.d = d & 0x07;
-		this.e = e & 0x07;
-		this.f = f & 0x07;
+		this.a = a & ROT_MASK;
+		this.b = b & ROT_MASK;
+		this.c = c & ROT_MASK;
+		this.d = d & ROT_MASK;
+		this.e = e & ROT_MASK;
+		this.f = f & ROT_MASK;
 		this.xora = xora;
 		this.xorb = xorb;
 		this.xorc = xorc;
@@ -72,12 +78,12 @@ public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
 		v = (v << 1) | (xord? 1L : 0L);
 		v = (v << 1) | (xore? 1L : 0L);
 		v = (v << 1) | (xorf? 1L : 0L);
-		v = (v << 3) | (a & 0x07L);
-		v = (v << 3) | (b & 0x07L);
-		v = (v << 3) | (c & 0x07L);
-		v = (v << 3) | (d & 0x07L);
-		v = (v << 3) | (e & 0x07L);
-		v = (v << 3) | (f & 0x07L);
+		v = (v << ROT_BITS) | (a & ROT_MASK_LONG);
+		v = (v << ROT_BITS) | (b & ROT_MASK_LONG);
+		v = (v << ROT_BITS) | (c & ROT_MASK_LONG);
+		v = (v << ROT_BITS) | (d & ROT_MASK_LONG);
+		v = (v << ROT_BITS) | (e & ROT_MASK_LONG);
+		v = (v << ROT_BITS) | (f & ROT_MASK_LONG);
 		return v;
 	}
 	
@@ -87,12 +93,12 @@ public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
 	 * @return a mix function from the packed long
 	 */
 	public static MixARX8x3 unpack(long v) {
-		int f = (int)(v & 0x07L); v = (v >>> 3);
-		int e = (int)(v & 0x07L); v = (v >>> 3);
-		int d = (int)(v & 0x07L); v = (v >>> 3);
-		int c = (int)(v & 0x07L); v = (v >>> 3);
-		int b = (int)(v & 0x07L); v = (v >>> 3);
-		int a = (int)(v & 0x07L); v = (v >>> 3);
+		int f = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
+		int e = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
+		int d = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
+		int c = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
+		int b = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
+		int a = (int)(v & ROT_MASK_LONG); v = (v >>> ROT_BITS);
 		boolean xorf = ((v & 0x1L) == 0x1L); v = (v >>> 1);
 		boolean xore = ((v & 0x1L) == 0x1L); v = (v >>> 1);
 		boolean xord = ((v & 0x1L) == 0x1L); v = (v >>> 1);
@@ -134,13 +140,15 @@ public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
 		int v3 = (input & 0xFF);
 		
 		for (int i = 0; i < rounds; i++) {
-			v1 = xora? (v1 ^ rot8(v2,a)) & 0xFF : (v1 + rot8(v2,a)) & 0xFF;
+			v1 = xora? (v1 ^ rot8(v3,a)) & 0xFF : (v1 + rot8(v3,a)) & 0xFF;
 			v2 = xorb? (v2 ^ rot8(v1,b)) & 0xFF : (v2 + rot8(v1,b)) & 0xFF;
-			v1 = xorc? (v1 ^ rot8(v2,c)) & 0xFF : (v1 + rot8(v2,c)) & 0xFF;
-			v2 = xord? (v2 ^ rot8(v1,d)) & 0xFF : (v2 + rot8(v1,d)) & 0xFF;
+			v3 = xorc? (v3 ^ rot8(v2,c)) & 0xFF : (v3 + rot8(v2,c)) & 0xFF;
+			v1 = xord? (v1 ^ rot8(v3,d)) & 0xFF : (v1 + rot8(v3,d)) & 0xFF;
+			v2 = xore? (v2 ^ rot8(v1,e)) & 0xFF : (v2 + rot8(v1,e)) & 0xFF;
+			v3 = xorf? (v3 ^ rot8(v2,f)) & 0xFF : (v3 + rot8(v2,f)) & 0xFF;
 		}
 		
-		return (v1 << 8) | v2;
+		return (v1 << 16) | (v2 << 8) | v3;
 	}
 	
 	private static int rot8(int v, int r) {
@@ -150,10 +158,12 @@ public class MixARX8x3 implements Diffuser, ARXMix<MixARX8x3> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format(xora? "a ^= ROT8(b,%d);\n" : "a += ROT8(b,%d);\n", a));
+		sb.append(String.format(xora? "a ^= ROT8(c,%d);\n" : "a += ROT8(c,%d);\n", a));
 		sb.append(String.format(xorb? "b ^= ROT8(a,%d);\n" : "b += ROT8(a,%d);\n", b));
-		sb.append(String.format(xorc? "a ^= ROT8(b,%d);\n" : "a += ROT8(b,%d);\n", c));
-		sb.append(String.format(xord? "b ^= ROT8(a,%d);\n" : "b += ROT8(a,%d);\n", d));
+		sb.append(String.format(xorc? "c ^= ROT8(b,%d);\n" : "c += ROT8(b,%d);\n", c));
+		sb.append(String.format(xord? "a ^= ROT8(c,%d);\n" : "a += ROT8(c,%d);\n", d));
+		sb.append(String.format(xore? "b ^= ROT8(a,%d);\n" : "b += ROT8(a,%d);\n", e));
+		sb.append(String.format(xorf? "c ^= ROT8(b,%d);\n" : "c += ROT8(b,%d);\n", f));
 		return sb.toString();
 	}
 }
