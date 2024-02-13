@@ -66,7 +66,9 @@ public class CounterPermutation {
 	}
 	
 	public static long permute(long v, long limit) {
-		if (limit > Integer.MAX_VALUE) {
+		if (limit == (1L << 32)) {
+			return mix32((int)v) & 0xFFFFFFFFL;
+		} else if (limit > Integer.MAX_VALUE) {
 			return permute64(v, limit);
 		} else {
 			return permute32((int)v, (int)limit) & 0xFFFFFFFFL;
