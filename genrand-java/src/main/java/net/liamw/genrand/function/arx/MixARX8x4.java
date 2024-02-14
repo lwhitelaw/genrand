@@ -5,6 +5,9 @@ import java.awt.image.BufferedImage;
 import net.liamw.genrand.util.Avalanche32;
 import net.liamw.genrand.util.Avalanche32.Diffuser;
 
+/**
+ * Mixing function using 8 add/xor Feistel-like operations on rotated values iterating through 4 terms.
+ */
 public class MixARX8x4 implements Diffuser, ARXMix<MixARX8x4> {
 	private static final int ROT_BITS = 3; // bits needed to define a rotation
 	private static final int ROT_MASK = (1 << ROT_BITS) - 1; // bit mask for rotation constants

@@ -1,10 +1,12 @@
 package net.liamw.genrand.function.arx;
 
 import java.awt.image.BufferedImage;
-
 import net.liamw.genrand.util.Avalanche64;
 import net.liamw.genrand.util.Avalanche64.Diffuser64;
 
+/**
+ * Mixing function using 6 add/xor Feistel-like operations on rotated values iterating through 3 terms.
+ */
 public class MixARX16x3 implements Diffuser64, ARXMix<MixARX16x3> {
 	private static final int ROT_BITS = 4; // bits needed to define a rotation
 	private static final int ROT_MASK = (1 << ROT_BITS) - 1; // bit mask for rotation constants
