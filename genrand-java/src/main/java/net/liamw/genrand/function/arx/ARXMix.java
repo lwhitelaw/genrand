@@ -65,7 +65,7 @@ public interface ARXMix<T extends ARXMix<T>> {
 	 */
 	public static <T extends ARXMix<T>> void generateInNewThread(Database database, ARXMixInfo<T> type) {
 		final long START = database.getCheckpoint(type.getDatabaseTag());
-		final long LIMIT = (1 << type.getDefinitionBits());
+		final long LIMIT = (1L << type.getDefinitionBits());
 		Thread t = new Thread(() -> {
 			try {
 				long c = START;
