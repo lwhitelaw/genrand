@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -291,6 +292,14 @@ public class Database {
 			pss.setString(1, type);
 			pss.setLong(2, def);
 		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
+	public long getARXCount(String type) {
+		return database.query("SELECT count(*) FROM mixarx WHERE type = ?", pss -> {
+			pss.setString(1, type);
+		},rs -> {
+			return rs.getLong(1);
+		});
 	}
 	
 	public List<ARXMixEntry> getARXByTypeChronologically(String type, int limit, int page) {

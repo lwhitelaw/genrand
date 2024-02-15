@@ -29,6 +29,11 @@ public class GenrandAPI {
 		return list;
 	}
 	
+	@GetMapping("/arx/{type}/count")
+	public long getARXCount(@PathVariable("type") String type) {
+		return database.getARXCount(type);
+	}
+	
 	private static final int PAGE_SIZE = 256;
 	
 	@GetMapping("/arx/{type}/list/{page}")
