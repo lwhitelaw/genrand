@@ -7,6 +7,8 @@ import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.util.DriverDataSource;
 
 /**
@@ -21,8 +23,12 @@ public class GenrandConfiguration {
 	 */
 	@Bean
 	public DataSource getDataSource() {
-		Properties properties = new Properties();
-		DataSource source = new DriverDataSource("jdbc:sqlite:./genrand.db", "org.sqlite.JDBC", properties, null, null);
+//		DataSource source = new DriverDataSource("jdbc:sqlite:./genrand-test.db", "org.sqlite.JDBC", properties, null, null);
+		HikariConfig config = new HikariConfig();
+		config.setDriverClassName("org.sqlite.JDBC");
+		config.setJdbcUrl("jdbc:sqlite:./genrand-test.db");
+		config.setMaximumPoolSize(1);
+		DataSource source = new HikariDataSource(config);
 		return source;
 	}
 }

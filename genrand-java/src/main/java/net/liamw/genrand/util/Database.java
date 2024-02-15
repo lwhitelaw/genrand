@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.imageio.ImageIO;
 
@@ -289,8 +291,12 @@ public class Database {
 	
 	private static final Path IMAGE_PATH = Paths.get("./images/");
 	
+	/**
+	 * Spring's reference to the database. While thread-safe, concurrent writes seem to cause problems
+	 */
 	@Autowired
-	JdbcTemplate database;
+	private JdbcTemplate database;
+	private final ReadWriteLock databaseLock = new ReentrantReadWriteLock();
 	
 	/**
 	 * Create the initial tables.
@@ -475,7 +481,7 @@ public class Database {
 				}
 			});
 		} catch (DataAccessException ex) {
-			System.out.println("Insertion into database failed for arx32x32 type " + definition);
+			System.out.println("Insertion into database failed for type " + definition);
 			ex.printStackTrace(System.out);
 		}
 	}
