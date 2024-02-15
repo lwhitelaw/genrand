@@ -70,7 +70,7 @@ public interface ARXMix<T extends ARXMix<T>> {
 			try {
 				long c = START;
 				while (c < LIMIT) {
-					System.out.println("Try " + c + " of " + LIMIT);
+					System.out.println("Try " + c + " of " + LIMIT + " for " + type.getDatabaseTag());
 					T mix = type.unpack(CounterPermutation.permute(c,LIMIT));
 					database.submit(mix);
 					c++;

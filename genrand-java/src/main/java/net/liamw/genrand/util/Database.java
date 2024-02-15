@@ -11,6 +11,7 @@ import java.sql.Types;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 import javax.imageio.ImageIO;
 
@@ -435,19 +436,19 @@ public class Database {
 		long definition = mix.pack();
 		// score avalanche functions for 1 to 4 rounds
 		double av1 = mix.score(1);
-		System.out.printf("1 round... %f\n",av1);
+//		System.out.printf("1 round... %f\n",av1);
 		double av2 = mix.score(2);
-		System.out.printf("2 round... %f\n",av2);
+//		System.out.printf("2 round... %f\n",av2);
 		double av3 = mix.score(3);
-		System.out.printf("3 round... %f\n",av3);
+//		System.out.printf("3 round... %f\n",av3);
 		double av4 = mix.score(4);
-		System.out.printf("4 round... %f\n",av4);
+//		System.out.printf("4 round... %f\n",av4);
 		// make avalanche graphs for the same - if any fail, they'll be zero. This is fine. It'll be made null later.
 		long avImageSnowflake1 = putImage(mix.graph(1));
 		long avImageSnowflake2 = putImage(mix.graph(2));
 		long avImageSnowflake3 = putImage(mix.graph(3));
 		long avImageSnowflake4 = putImage(mix.graph(4));
-		System.out.printf("Images done...\n");
+//		System.out.printf("Images done...\n");
 		// Write out into database
 		try {
 			database.update("INSERT INTO mixarx (type,definition,avScore1,avScore2,avScore3,avScore4,avImage1,avImage2,avImage3,avImage4) VALUES (?,?,?,?,?,?,?,?,?,?)", pss -> {
@@ -536,14 +537,14 @@ public class Database {
 				pss.setString(1, ident);
 				pss.setLong(2, value);
 			});
-			System.out.println("Inserted value");
+//			System.out.println("Inserted value");
 		} else {
 			// Value is set. Update instead.
 			database.update("UPDATE arxsearch SET checkpoint = ? WHERE type = ?", pss -> {
 				pss.setLong(1, value);
 				pss.setString(2, ident);
 			});
-			System.out.println("Set value");
+//			System.out.println("Set value");
 		}
 	}
 	
@@ -593,5 +594,10 @@ public class Database {
 		database.update("DELETE FROM arxsearch WHERE type = ?", pss -> {
 			pss.setString(1, type);
 		});
+	}
+	
+	@Transactional
+	public void runTransactionally(Consumer<Database> caller) {
+		caller.accept(this);
 	}
 }
