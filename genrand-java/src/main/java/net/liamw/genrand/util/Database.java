@@ -286,9 +286,18 @@ public class Database {
 		}
 	}
 	
-	public List<ARXMixEntry> getARX32x2ByDefinition(long def) {
-		return database.query("SELECT * FROM mixarx WHERE type = '32x2' AND definition = ?", pss -> {
-			pss.setLong(1, def);
+	public List<ARXMixEntry> getARXByDefinition(String type, long def) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? AND definition = ?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2, def);
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
+	public List<ARXMixEntry> getARXByTypeChronologically(String type, int limit, int page) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY rowid DESC LIMIT ?,?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2,(long)page * (long)limit); // page order from zero
+			pss.setLong(3,(long)limit); // limit per page
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	

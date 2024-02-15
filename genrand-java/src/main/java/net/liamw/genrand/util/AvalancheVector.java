@@ -127,8 +127,7 @@ public class AvalancheVector {
 		BitVector flippedInput = input.dup();
 		flippedInput.flipBitAt(whichBit);
 		BitVector flippedDiffused = diffuser.diffuse(flippedInput);
-		BitVector xorDiffused = diffusedInput.dup();
-		xorDiffused.xor(flippedDiffused);
-		return xorDiffused;
+		flippedDiffused.xor(diffusedInput);
+		return flippedDiffused;
 	}
 }
