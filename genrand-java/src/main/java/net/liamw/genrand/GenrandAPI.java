@@ -36,4 +36,28 @@ public class GenrandAPI {
 		List<ARXMixEntry> list = database.getARXByTypeChronologically(type,PAGE_SIZE,page);
 		return list;
 	}
+	
+	@GetMapping("/arx/{type}/topScoring/round1/{page}")
+	public List<ARXMixEntry> getARXByTypeSortedByAv1(@PathVariable("type") String type, @PathVariable("page") int page) {
+		List<ARXMixEntry> list = database.getARXByTypeSortByRound1(type,PAGE_SIZE,page);
+		return list;
+	}
+	
+	@GetMapping("/arx/{type}/topScoring/round2/{page}")
+	public List<ARXMixEntry> getARXByTypeSortedByAv2(@PathVariable("type") String type, @PathVariable("page") int page) {
+		List<ARXMixEntry> list = database.getARXByTypeSortByRound2(type,PAGE_SIZE,page);
+		return list;
+	}
+	
+	@GetMapping("/arx/{type}/topScoring/round3/{page}")
+	public List<ARXMixEntry> getARXByTypeSortedByAv3(@PathVariable("type") String type, @PathVariable("page") int page) {
+		List<ARXMixEntry> list = database.getARXByTypeSortByRound3(type,PAGE_SIZE,page);
+		return list;
+	}
+	
+	@GetMapping("/arx/{type}/topScoring/round4/{page}")
+	public List<ARXMixEntry> getARXByTypeSortedByAv4(@PathVariable("type") String type, @PathVariable("page") int page) {
+		List<ARXMixEntry> list = database.getARXByTypeSortByRound4(type,PAGE_SIZE,page);
+		return list;
+	}
 }

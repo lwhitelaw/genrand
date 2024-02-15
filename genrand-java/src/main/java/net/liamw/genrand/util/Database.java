@@ -301,6 +301,38 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	public List<ARXMixEntry> getARXByTypeSortByRound1(String type, int limit, int page) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore1 ASC LIMIT ?,?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2,(long)page * (long)limit); // page order from zero
+			pss.setLong(3,(long)limit); // limit per page
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
+	public List<ARXMixEntry> getARXByTypeSortByRound2(String type, int limit, int page) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore2 ASC LIMIT ?,?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2,(long)page * (long)limit); // page order from zero
+			pss.setLong(3,(long)limit); // limit per page
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
+	public List<ARXMixEntry> getARXByTypeSortByRound3(String type, int limit, int page) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore3 ASC LIMIT ?,?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2,(long)page * (long)limit); // page order from zero
+			pss.setLong(3,(long)limit); // limit per page
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
+	public List<ARXMixEntry> getARXByTypeSortByRound4(String type, int limit, int page) {
+		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore4 ASC LIMIT ?,?", pss -> {
+			pss.setString(1, type);
+			pss.setLong(2,(long)page * (long)limit); // page order from zero
+			pss.setLong(3,(long)limit); // limit per page
+		}, ARXMixEntry::fromDatabaseRowMapper);
+	}
+	
 	private static final Path IMAGE_PATH = Paths.get("./images/");
 	
 	/**
