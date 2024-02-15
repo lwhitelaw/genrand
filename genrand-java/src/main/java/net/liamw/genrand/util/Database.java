@@ -21,6 +21,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -293,11 +295,15 @@ public class Database {
 	private static final Path IMAGE_PATH = Paths.get("./images/");
 	
 	/**
-	 * Spring's reference to the database. While thread-safe, concurrent writes seem to cause problems
+	 * Spring's reference to the database.
 	 */
 	@Autowired
 	private JdbcTemplate database;
-	private final ReadWriteLock databaseLock = new ReentrantReadWriteLock();
+	/**
+	 * Spring's reference to database operations that are transactional.
+	 */
+	@Autowired
+	private TransactionTemplate dbTransaction;
 	
 	/**
 	 * Create the initial tables.
@@ -428,10 +434,12 @@ public class Database {
 	}
 	
 	/**
-	 * Write a generated mix function into the database.
+	 * Write a generated mix function into the database and execute postAction in a transaction. postAction may be null if there is no need to
+	 * do anything in a transaction with the writing of the mix function.
 	 * @param mix mix to write
+	 * @param postAction action to execute
 	 */
-	public void submit(ARXMix<?> mix) {
+	public void submit(ARXMix<?> mix, Consumer<Database> postAction) {
 		// pack into long value
 		long definition = mix.pack();
 		// score avalanche functions for 1 to 4 rounds
@@ -451,35 +459,38 @@ public class Database {
 //		System.out.printf("Images done...\n");
 		// Write out into database
 		try {
-			database.update("INSERT INTO mixarx (type,definition,avScore1,avScore2,avScore3,avScore4,avImage1,avImage2,avImage3,avImage4) VALUES (?,?,?,?,?,?,?,?,?,?)", pss -> {
-				pss.setString(1,mix.getInfo().getDatabaseTag());
-				pss.setLong(2,definition);
-				
-				pss.setDouble(3,av1);
-				pss.setDouble(4,av2);
-				pss.setDouble(5,av3);
-				pss.setDouble(6,av4);
-				
-				if (avImageSnowflake1 == 0) {
-					pss.setNull(7,Types.VARCHAR);
-				} else {
-					pss.setString(7,String.format("%016X",avImageSnowflake1));
-				}
-				if (avImageSnowflake2 == 0) {
-					pss.setNull(8,Types.VARCHAR);
-				} else {
-					pss.setString(8,String.format("%016X",avImageSnowflake2));
-				}
-				if (avImageSnowflake3 == 0) {
-					pss.setNull(9,Types.VARCHAR);
-				} else {
-					pss.setString(9,String.format("%016X",avImageSnowflake3));
-				}
-				if (avImageSnowflake4 == 0) {
-					pss.setNull(10,Types.VARCHAR);
-				} else {
-					pss.setString(10,String.format("%016X",avImageSnowflake4));
-				}
+			dbTransaction.executeWithoutResult(status -> {
+				database.update("INSERT INTO mixarx (type,definition,avScore1,avScore2,avScore3,avScore4,avImage1,avImage2,avImage3,avImage4) VALUES (?,?,?,?,?,?,?,?,?,?)", pss -> {
+					pss.setString(1,mix.getInfo().getDatabaseTag());
+					pss.setLong(2,definition);
+					
+					pss.setDouble(3,av1);
+					pss.setDouble(4,av2);
+					pss.setDouble(5,av3);
+					pss.setDouble(6,av4);
+					
+					if (avImageSnowflake1 == 0) {
+						pss.setNull(7,Types.VARCHAR);
+					} else {
+						pss.setString(7,String.format("%016X",avImageSnowflake1));
+					}
+					if (avImageSnowflake2 == 0) {
+						pss.setNull(8,Types.VARCHAR);
+					} else {
+						pss.setString(8,String.format("%016X",avImageSnowflake2));
+					}
+					if (avImageSnowflake3 == 0) {
+						pss.setNull(9,Types.VARCHAR);
+					} else {
+						pss.setString(9,String.format("%016X",avImageSnowflake3));
+					}
+					if (avImageSnowflake4 == 0) {
+						pss.setNull(10,Types.VARCHAR);
+					} else {
+						pss.setString(10,String.format("%016X",avImageSnowflake4));
+					}
+				});
+				if (postAction != null) postAction.accept(this);
 			});
 		} catch (DataAccessException ex) {
 			System.out.println("Insertion into database failed for type " + definition);
@@ -525,27 +536,29 @@ public class Database {
 		});
 	}
 	
-	@Transactional
 	public void setCheckpoint(String ident, long value) {
 		// Don't allow values < 1
 		if (value < 1) return;
-		// Check to see if checkpoint is set
-		long originalValue = getCheckpoint(ident);
-		if (originalValue == 0) {
-			// Value not set. Needs to insert value.
-			database.update("INSERT INTO arxsearch (type,checkpoint) VALUES (?,?)", pss -> {
-				pss.setString(1, ident);
-				pss.setLong(2, value);
-			});
-//			System.out.println("Inserted value");
-		} else {
-			// Value is set. Update instead.
-			database.update("UPDATE arxsearch SET checkpoint = ? WHERE type = ?", pss -> {
-				pss.setLong(1, value);
-				pss.setString(2, ident);
-			});
-//			System.out.println("Set value");
-		}
+		
+		dbTransaction.executeWithoutResult(status -> {
+			// Check to see if checkpoint is set
+			long originalValue = getCheckpoint(ident);
+			if (originalValue == 0) {
+				// Value not set. Needs to insert value.
+				database.update("INSERT INTO arxsearch (type,checkpoint) VALUES (?,?)", pss -> {
+					pss.setString(1, ident);
+					pss.setLong(2, value);
+				});
+//				System.out.println("Inserted value");
+			} else {
+				// Value is set. Update instead.
+				database.update("UPDATE arxsearch SET checkpoint = ? WHERE type = ?", pss -> {
+					pss.setLong(1, value);
+					pss.setString(2, ident);
+				});
+//				System.out.println("Set value");
+			}
+		});
 	}
 	
 	public void clearARXTable(String type) {
@@ -596,8 +609,10 @@ public class Database {
 		});
 	}
 	
-	@Transactional
 	public void runTransactionally(Consumer<Database> caller) {
-		caller.accept(this);
+		dbTransaction.execute((TransactionCallback<Void>)(status -> {
+			caller.accept(this);
+			return null;
+		}));
 	}
 }
