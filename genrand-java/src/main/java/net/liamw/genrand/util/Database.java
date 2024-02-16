@@ -342,7 +342,7 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
-	private static final Path IMAGE_PATH = Paths.get("./images/");
+	public static final Path IMAGE_PATH = Paths.get("./images/");
 	
 	/**
 	 * Spring's reference to the database.
@@ -565,7 +565,7 @@ public class Database {
 		return dirPath.resolve(String.format("%016X.png",snowflake));
 	}
 	
-	private static int mix12bit(long v) {
+	public static int mix12bit(long v) {
 		v ^= v >>> 21;
 		v *= 0x2AE264A9B1A36D69L;
 		v ^= v >>> 37;
