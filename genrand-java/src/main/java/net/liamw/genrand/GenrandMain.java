@@ -60,20 +60,20 @@ public class GenrandMain {
 		database.checkAndInitTables();
 //		database.clearARXTable("64x2");
 		ARXMix.generateInNewThread(database,MixARX8x2.INFO);
-//		ARXMix.generateInNewThread(database,MixARX8x3.INFO);
-//		ARXMix.generateInNewThread(database,MixARX8x4.INFO);
+		ARXMix.generateInNewThread(database,MixARX8x3.INFO);
+		ARXMix.generateInNewThread(database,MixARX8x4.INFO);
 		
-//		ARXMix.generateInNewThread(database,MixARX16x2.INFO);
-//		ARXMix.generateInNewThread(database,MixARX16x3.INFO);
-//		ARXMix.generateInNewThread(database,MixARX16x4.INFO);
+		ARXMix.generateInNewThread(database,MixARX16x2.INFO);
+		ARXMix.generateInNewThread(database,MixARX16x3.INFO);
+		ARXMix.generateInNewThread(database,MixARX16x4.INFO);
 		
-//		ARXMix.generateInNewThread(database,MixARX32x2.INFO);
-//		ARXMix.generateInNewThread(database,MixARX32x3.INFO);
-//		ARXMix.generateInNewThread(database,MixARX32x4.INFO);
+		ARXMix.generateInNewThread(database,MixARX32x2.INFO);
+		ARXMix.generateInNewThread(database,MixARX32x3.INFO);
+		ARXMix.generateInNewThread(database,MixARX32x4.INFO);
 		
-//		ARXMix.generateInNewThread(database,MixARX64x2.INFO);
-//		ARXMix.generateInNewThread(database,MixARX64x3.INFO);
-//		ARXMix.generateInNewThread(database,MixARX64x4.INFO);
+		ARXMix.generateInNewThread(database,MixARX64x2.INFO);
+		ARXMix.generateInNewThread(database,MixARX64x3.INFO);
+		ARXMix.generateInNewThread(database,MixARX64x4.INFO);
 	}
 
 	public void runMix32() {

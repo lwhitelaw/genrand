@@ -73,10 +73,10 @@ public class DebugAPI {
 			sb.append("<th>defn</th> <th>round1</th> <th>round2</th> <th>round3</th> <th>round4</th>");
 			appendMix(sb, e);
 			sb.append("</table><br>");
-			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage1()) + "\" width=256 height=256><br>");
-			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage2()) + "\" width=256 height=256><br>");
-			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage3()) + "\" width=256 height=256><br>");
-			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage4()) + "\" width=256 height=256><br>");
+			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage1()) + "\" width=256 height=256 style=\"image-rendering: pixelated;\"><br>");
+			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage2()) + "\" width=256 height=256 style=\"image-rendering: pixelated;\"><br>");
+			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage3()) + "\" width=256 height=256 style=\"image-rendering: pixelated;\"><br>");
+			sb.append("<img src=\"/debug/image/" + toImagePath(e.getAvImage4()) + "\" width=256 height=256 style=\"image-rendering: pixelated;\"><br>");
 		}
 		appendEnd(sb);
 		return sb.toString();
