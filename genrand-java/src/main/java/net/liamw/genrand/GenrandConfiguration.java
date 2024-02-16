@@ -25,6 +25,7 @@ public class GenrandConfiguration {
 		config.setDriverClassName("org.sqlite.JDBC");
 		config.setJdbcUrl("jdbc:sqlite:./genrand.db");
 		config.setMaximumPoolSize(1);
+		config.setConnectionTimeout(Long.MAX_VALUE); // wait forever to get a connection if needed
 		DataSource source = new HikariDataSource(config);
 		return source;
 	}
