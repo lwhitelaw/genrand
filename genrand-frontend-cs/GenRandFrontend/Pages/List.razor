@@ -1,0 +1,26 @@
+﻿@page "/list"
+@using GenRandFrontend.Data
+@inject APIAccessorService api
+
+<PageTitle>GenRand</PageTitle>
+
+<h1>List</h1>
+
+@code {
+	ARXMixEntry mix;
+
+	protected override async Task OnInitializedAsync()
+	{
+		mix = await api.GetARXMixByDefinition("32x2", 15235882UL);
+	}
+}
+
+@if (mix == null)
+{
+	<p>Please wait</p>
+}
+else
+{
+	<p>@mix</p>
+}
+
