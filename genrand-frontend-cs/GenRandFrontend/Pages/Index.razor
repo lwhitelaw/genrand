@@ -31,16 +31,13 @@ go ahead and feel free to use these as part of it.)
 
 <h2>The Functions</h2>
 <h3>Design</h3>
-At this moment, 32 bit functions are available. The functions are currently based on a composition of the following:
+At this moment, 8, 16, 32, and 64 bit functions are available with 2, 3, and 4 terms. The functions are currently based on a composition of the following:
 <ul>
-	<li>addition by constant</li>
-	<li>bitwise XOR by constant</li>
-	<li>modular multiplication by constant</li>
-	<li>bitwise rotations by constant amounts</li>
-	<li>left and right XOR-shifts (XOR the value with another bit-shifted copy of itself by constant amount)</li>
+	<li>addition by rotation of another term</li>
+	<li>bitwise XOR by rotation of another term</li>
 </ul>
-Each of these is known as an <em>operator</em>. Not all operators are used in generated functions. Functions with less
-operators will generally be faster, but the output will not be as pseudo-random as a function using more of them.
+There are 4, 6, or 8 operators depending on the number of terms used. This number was chosen as a balance between performance
+and variety in the mixing functions produced. Structurally, the functions resemble Feistel networks. This is intentional.
 
 <h3>Scoring</h3>
 Functions are scored based on how they fare in the <em>avalanche test</em>, which tries to determine how well the function follows
@@ -58,12 +55,12 @@ White pixels at a given (<em>x</em>,<em>y</em>) indicate that output bit <em>y</
 Grey pixels indicate the bit flipped only sometimes. The ideal function following the strict avalanche criterion shows 50% grey in all pixels.
 
 <img src="/example/identity.png" />
-The avalanche graph of the identity function <em>f(x) = x</em>.
+<p class="centre">The avalanche graph of the identity function <em>f(x) = x</em>.</p>
 <img src="/example/bad.png" />
-This function is not mixing well.
+<p class="centre">This function is not mixing well.</p>
 <img src="/example/okay.png" />
-This function has okay mixing.
+<p class="centre">This function has okay mixing.</p>
 <img src="/example/good.png" />
-This function has very good mixing, but it is not quite perfect.
+<p class="centre">This function has very good mixing, but it is not quite perfect.</p>
 <img src="/example/best.png" />
-This function is what a good permutation should look like.
+<p class="centre">This function is what a good permutation should look like.</p>
