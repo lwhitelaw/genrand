@@ -1,4 +1,4 @@
-﻿@page "/list"
+﻿@page "/list/{Type}/{Page:int}"
 @using GenRandFrontend.Data
 @inject APIAccessorService api
 
@@ -7,22 +7,107 @@
 <h1>List</h1>
 
 @code {
-	ARXMixEntry mix;
+	// Info from the get request
+	[Parameter]
+	public string Type { get; set; }
+	[Parameter]
+	public int Page { get; set; }
 
-	protected override async Task OnInitializedAsync()
+	// Valid types
+	private List<string> ValidTypes = new List<string>(new string[] {"8x2","8x3","8x4","16x2","16x3","16x4","32x2","32x3","32x4","64x2","64x3","64x4"});
+	// The number of items that exist
+	public long Items;
+	// The number of valid pages that exist
+	public long Pages;
+	// The entries to be displayed
+	public List<ARXMixEntry> Entries = null;
+
+	protected override async Task OnParametersSetAsync()
 	{
-		mix = await api.GetARXMixByDefinition("32x2", 15235882UL);
+		if (!ValidTypes.Contains(Type)) return;
+		if (Page < 1) return;
+		Items = await api.GetARXCountByType(Type);
+		// Page count is items / 256, rounded up. This is the last valid page as pages are 1-indexed
+		// There's always at least one page
+		Pages = Math.Max((Items / 256) + ((Items % 256) > 0 ? 1 : 0),1);
+		if (Page > Pages) return;
+		Entries = await api.GetARXByTypeChronologically(Type, Page-1);
 	}
 }
 
-@if (mix == null)
+@if (!ValidTypes.Contains(Type))
 {
-	<p>Please wait</p>
+	<p>The type @Type does not exist.</p>
+}
+else if (Page < 1 || Page > Pages)
+{
+	<p>The provided page does not exist.</p>
+}
+else if (Entries == null)
+{
+	<p>Wait</p>
 }
 else
 {
-	<p>@mix</p>
-	<br />
-	<p>@mix.GetTerseOperationString()</p>
+	// Pagination
+	<nav>
+		<ul class="pagination">
+			@if (Page > 1)
+			{
+				<li class="page-item">
+					<a class="page-link" href="/list/@Type/@(Page-1)">
+						<span class="oi oi-caret-left"></span>
+					</a>
+				</li>
+			}
+
+			@for (int pageNumber = Math.Max(1,Page-4); pageNumber <= Math.Min(Pages,Page+4); pageNumber++)
+			{
+				if (pageNumber == Page)
+				{
+					<li class="page-item active"><a class="page-link" href="/list/@Type/@pageNumber">@pageNumber</a></li>
+				}
+				else
+				{
+					<li class="page-item"><a class="page-link" href="/list/@Type/@pageNumber">@pageNumber</a></li>
+				}
+			}
+
+			@if (Page < Pages)
+			{
+				<li class="page-item">
+					<a class="page-link" href="/list/@Type/@(Page+1)">
+						<span class="oi oi-caret-right"></span>
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
+	// List rendering
+	<table class="table table-responsive table-striped">
+		<thead>
+			<tr>
+				<th>Definition</th>
+				<th>Operations</th>
+				<th>Round 1</th>
+				<th>Round 2</th>
+				<th>Round 3</th>
+				<th>Round 4</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (ARXMixEntry e in Entries)
+			{
+				<tr>
+					<td>@e.Definition</td>
+					<td>@e.GetTerseOperationString()</td>
+					<td>@string.Format("{0:F4}",e.AvScore1)</td>
+					<td>@string.Format("{0:F4}",e.AvScore2)</td>
+					<td>@string.Format("{0:F4}",e.AvScore3)</td>
+					<td>@string.Format("{0:F4}",e.AvScore4)</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
