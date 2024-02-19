@@ -142,7 +142,7 @@ else
 			@foreach (ARXMixEntry e in Entries)
 			{
 				<tr>
-					<td>@e.Definition</td>
+					<td><a href="/definition/@Type/@e.Definition">@e.Definition</a></td>
 					<td>@e.GetTerseOperationString()</td>
 					<td>@string.Format("{0:F4}",e.AvScore1)</td>
 					<td>@string.Format("{0:F4}",e.AvScore2)</td>

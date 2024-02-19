@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.Diagnostics.Eventing.Reader;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -233,5 +235,26 @@ namespace GenRandFrontend.Data
 			}
 			return sb.ToString();
 		}
+
+		const string IMAGE_PATH_PREFIX = "/images";
+
+		public static string GetImagePath(string imageRefHex)
+		{
+			ulong hexValue = Convert.ToUInt64(imageRefHex, 16);
+			return string.Format("{0}/{1:X3}/{2}.png", IMAGE_PATH_PREFIX, Mix12Bits(hexValue), imageRefHex);
+		}
+
+		private static int Mix12Bits(ulong v)
+		{
+			v ^= v >> 21;
+			v *= 0x2AE264A9B1A36D69UL;
+			v ^= v >> 37;
+			v *= 0x396747CA3A58E56FUL;
+			v ^= v >> 44;
+			v *= 0xFB7719182775D593UL;
+			v ^= v >> 21;
+			return (int)(v & 0xFFFUL);
+		}
+
 	}
 }

@@ -69,10 +69,18 @@ a, .btn-link {
 
 /* added */
 img {
+    image-rendering: pixelated;
+}
+
+img.expand {
+    width: 100%;
+    height: 100%;
+}
+
+img.centre-display {
     display: block;
     margin-left: auto;
     margin-right: auto;
-    image-rendering: pixelated;
     width: 256px;
     height: 256px;
 }

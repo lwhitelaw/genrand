@@ -1,0 +1,126 @@
+﻿@page "/definition/{Type}/{Definition:long}"
+@using GenRandFrontend.Data
+@inject APIAccessorService api
+
+<PageTitle>GenRand</PageTitle>
+
+@code {
+	// Info from the get request
+	[Parameter]
+	public string Type { get; set; }
+	[Parameter]
+	public long Definition { get; set; }
+
+	bool Loaded;
+	ARXMixEntry entry;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		Loaded = false;
+		try
+		{
+			entry = await api.GetARXMixByDefinition(Type, (ulong)Definition);
+		}
+		catch (Exception ex)
+		{
+			// ignore and keep entry null
+			entry = null;
+		}
+		Loaded = true;
+	}
+}
+
+@* Loading/error messages *@
+@if (!Loaded)
+{
+	<p>Wait</p>
+}
+else if (entry != null)
+{
+	// Show the mix
+	<h1>Mix @Type - Definition @Definition</h1>
+
+	<div class="card">
+		<h5 class="card-header">Code</h5>
+		<div class="card-body">
+			<code>
+				@foreach (string line in entry.GetCodeString().Split("\n"))
+				{
+					@line<br />
+				}
+			</code>
+		</div>
+	</div>
+	<br />
+	<br />
+	<h2>Avalanche Scores</h2>
+
+	<ul class="list-group">
+		<li class="list-group-item"><strong>1 Round: </strong> @entry.AvScore1</li>
+		<li class="list-group-item"><strong>2 Rounds: </strong> @entry.AvScore2</li>
+		<li class="list-group-item"><strong>3 Rounds: </strong> @entry.AvScore3</li>
+		<li class="list-group-item"><strong>4 Rounds: </strong> @entry.AvScore4</li>
+	</ul>
+
+	<div class="row">
+		<div class="card mb-3" style="max-width: 540px;">
+			<div class="row g-0">
+				<div class="col-md-4">
+					<img src="@ARXMixEntry.GetImagePath(entry.AvImage1)" class="img-fluid expand rounded-start" alt="...">
+				</div>
+				<div class="col-md-4">
+					<div class="card-body">
+						<h5 class="card-title">1 Round</h5>
+						<p class="card-text">@entry.AvScore1</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-3" style="max-width: 540px;">
+			<div class="row g-0">
+				<div class="col-md-4">
+					<img src="@ARXMixEntry.GetImagePath(entry.AvImage2)" class="img-fluid expand rounded-start" alt="...">
+				</div>
+				<div class="col-md-4">
+					<div class="card-body">
+						<h5 class="card-title">2 Rounds</h5>
+						<p class="card-text">@entry.AvScore2</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-3" style="max-width: 540px;">
+			<div class="row g-0">
+				<div class="col-md-4">
+					<img src="@ARXMixEntry.GetImagePath(entry.AvImage3)" class="img-fluid expand rounded-start" alt="...">
+				</div>
+				<div class="col-md-4">
+					<div class="card-body">
+						<h5 class="card-title">3 Rounds</h5>
+						<p class="card-text">@entry.AvScore3</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-3" style="max-width: 540px;">
+			<div class="row g-0">
+				<div class="col-md-4">
+					<img src="@ARXMixEntry.GetImagePath(entry.AvImage4)" class="img-fluid expand rounded-start" alt="...">
+				</div>
+				<div class="col-md-4">
+					<div class="card-body">
+						<h5 class="card-title">4 Rounds</h5>
+						<p class="card-text">@entry.AvScore4</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+else
+{
+	<p>There was a problem loading this entry. It may not exist or there may have been an issue accessing the data. Please try again later.</p>
+}
