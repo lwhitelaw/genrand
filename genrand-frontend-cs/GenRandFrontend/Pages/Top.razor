@@ -1,0 +1,43 @@
+﻿@page "/top/{Type}/{Round}/{Page:int}"
+@using GenRandFrontend.Data
+@inject APIAccessorService api
+
+<PageTitle>GenRand</PageTitle>
+
+@code {
+	// Info from the get request
+	[Parameter]
+	public string Type { get; set; }
+	[Parameter]
+	public int Page { get; set; }
+	[Parameter]
+	public string Round { get; set; }
+
+	private string prefix;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		prefix = $"/top/{Type}/{Round}";
+	}
+}
+
+@if (Round == "round1")
+{
+	<ARXMixList Type=@Type Page=@Page Round=1 PageRoutePrefix=@prefix />
+}
+else if (Round == "round2")
+{
+	<ARXMixList Type=@Type Page=@Page Round=2 PageRoutePrefix=@prefix />
+}
+else if (Round == "round3")
+{
+	<ARXMixList Type=@Type Page=@Page Round=3 PageRoutePrefix=@prefix />
+}
+else if (Round == "round4")
+{
+	<ARXMixList Type=@Type Page=@Page Round=4 PageRoutePrefix=@prefix />
+}
+else
+{
+	<p>The round specified is not valid.</p>
+}

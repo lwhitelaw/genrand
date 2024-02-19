@@ -1,0 +1,155 @@
+﻿@using GenRandFrontend.Data
+@inject APIAccessorService api
+
+@code {
+	// Info from the main page
+	[Parameter]
+	public string Type { get; set; }
+	[Parameter]
+	public int Page { get; set; }
+	[Parameter]
+	public int Round { get; set; } // may be 1-4 to show top results or anything else to show chronological
+	[Parameter]
+	public string PageRoutePrefix { get; set; } // pagination routing info
+
+	// Sets true when the page loads
+	private bool Loaded = false;
+	// Valid types
+	private List<string> ValidTypes = new List<string>(new string[] { "8x2", "8x3", "8x4", "16x2", "16x3", "16x4", "32x2", "32x3", "32x4", "64x2", "64x3", "64x4" });
+	// The number of items that exist
+	public long Items;
+	// The number of valid pages that exist
+	public long Pages;
+	// The entries to be displayed
+	public List<ARXMixEntry> Entries = null;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		Loaded = false;
+		if (!ValidTypes.Contains(Type) || Page < 1)
+		{
+			Loaded = true;
+			return;
+		}
+		Items = await api.GetARXCountByType(Type);
+		// Page count is items / 256, rounded up. This is the last valid page as pages are 1-indexed
+		// There's always at least one page
+		Pages = Math.Max((Items / 256) + ((Items % 256) > 0 ? 1 : 0), 1);
+		if (Page > Pages)
+		{
+			Loaded = true;
+			return;
+		}
+		if (Round < 1 || Round > 4)
+		{
+			Entries = await api.GetARXByTypeChronologically(Type, Page - 1);
+		}
+		else
+		{
+			Entries = await api.GetARXByTypeSortedByAvScore(Type, Round, Page - 1);
+		}
+		Loaded = true;
+	}
+}
+
+@* Loading/error messages *@
+@if (!Loaded)
+{
+	<p>Wait</p>
+}
+else if (!ValidTypes.Contains(Type))
+{
+	<p>The type @Type does not exist.</p>
+}
+else if (Page < 1 || Page > Pages)
+{
+	<p>The provided page does not exist.</p>
+}
+else if (Entries == null)
+{
+	<p>Something did not work as expected. Please try again later.</p>
+}
+else
+{
+	@if (Round < 1 || Round > 4)
+	{
+		// Showing newest
+		<h1>@Type Mixes - Newest</h1>
+	}
+	else
+	{
+		// Showing top
+		<h1>@Type Mixes - Best by Round @Round Avalanche Score</h1>
+	}
+	// Round Selection
+	<nav>
+		<ul class="nav nav-tabs">
+			<li class="nav-item"><a class="nav-link @((Round < 1 || Round > 4)? "active" : "")" href="/list/@Type/1">Newest</a></li>
+			<li class="nav-item"><a class="nav-link @(Round == 1? "active" : "")" href="/top/@Type/round1/1">Round 1</a></li>
+			<li class="nav-item"><a class="nav-link @(Round == 2? "active" : "")" href="/top/@Type/round2/1">Round 2</a></li>
+			<li class="nav-item"><a class="nav-link @(Round == 3? "active" : "")" href="/top/@Type/round3/1">Round 3</a></li>
+			<li class="nav-item"><a class="nav-link @(Round == 4? "active" : "")" href="/top/@Type/round4/1">Round 4</a></li>
+		</ul>
+	</nav>
+	<br />
+	// Pagination
+	<nav>
+		<ul class="pagination">
+			@if (Page > 1)
+			{
+				<li class="page-item">
+					<a class="page-link" href="@PageRoutePrefix/@(Page-1)">
+						<span class="oi oi-caret-left"></span>
+					</a>
+				</li>
+			}
+
+			@for (int pageNumber = Math.Max(1, Page - 4); pageNumber <= Math.Min(Pages, Page + 4); pageNumber++)
+			{
+				if (pageNumber == Page)
+				{
+					<li class="page-item active"><a class="page-link" href="@PageRoutePrefix/@pageNumber">@pageNumber</a></li>
+				}
+				else
+				{
+					<li class="page-item"><a class="page-link" href="@PageRoutePrefix/@pageNumber">@pageNumber</a></li>
+				}
+			}
+
+			@if (Page < Pages)
+			{
+				<li class="page-item">
+					<a class="page-link" href="@PageRoutePrefix/@(Page+1)">
+						<span class="oi oi-caret-right"></span>
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
+	// List rendering
+	<table class="table table-responsive table-striped">
+		<thead>
+			<tr>
+				<th>Definition</th>
+				<th>Operations</th>
+				<th>Round 1</th>
+				<th>Round 2</th>
+				<th>Round 3</th>
+				<th>Round 4</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (ARXMixEntry e in Entries)
+			{
+				<tr>
+					<td>@e.Definition</td>
+					<td>@e.GetTerseOperationString()</td>
+					<td>@string.Format("{0:F4}",e.AvScore1)</td>
+					<td>@string.Format("{0:F4}",e.AvScore2)</td>
+					<td>@string.Format("{0:F4}",e.AvScore3)</td>
+					<td>@string.Format("{0:F4}",e.AvScore4)</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
