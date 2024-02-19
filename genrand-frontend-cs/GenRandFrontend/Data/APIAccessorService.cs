@@ -2,8 +2,14 @@
 
 namespace GenRandFrontend.Data
 {
+	/// <summary>
+	/// Accessor for the internal GenRand API
+	/// </summary>
 	public class APIAccessorService
 	{
+		/// <summary>
+		/// Bind port for the GenRand API
+		/// </summary>
 		private const string API_LOCATION = "http://localhost:8080";
 		private readonly HttpClient client;
 
@@ -12,6 +18,13 @@ namespace GenRandFrontend.Data
 			client = new HttpClient();
 		}
 
+		/// <summary>
+		/// Return one value depending on type and packed definition.
+		/// </summary>
+		/// <param name="type">type to get</param>
+		/// <param name="packedDefinition">packed definition to get</param>
+		/// <returns>the requested mix</returns>
+		/// <exception cref="Exception">if the mix is not present or getting it fails</exception>
 		public async Task<ARXMixEntry> GetARXMixByDefinition(string type, ulong packedDefinition)
 		{
 			List<ARXMixEntry>? value = (List<ARXMixEntry>?) await client.GetFromJsonAsync($"{API_LOCATION}/arx/{type}/definition/{packedDefinition}",typeof(List<ARXMixEntry>));

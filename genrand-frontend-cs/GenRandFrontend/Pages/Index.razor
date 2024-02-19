@@ -28,6 +28,8 @@ meaning. Therefore, these will be referred to as (non-cryptographic) pseudo-rand
 directly use these for cryptographic security! There's no verification whatsoever. (But if you are a cryptographer designing a new algorithm,
 go ahead and feel free to use these as part of it.)
 <br /><br />
+I also call these mix functions or mixers because I never settled on what they <em>should</em> be called. My code calls them that and the rest of GenRand
+does as well.
 
 <h2>The Functions</h2>
 <h3>Design</h3>
@@ -38,6 +40,9 @@ At this moment, 8, 16, 32, and 64 bit functions are available with 2, 3, and 4 t
 </ul>
 There are 4, 6, or 8 operators depending on the number of terms used. This number was chosen as a balance between performance
 and variety in the mixing functions produced. Structurally, the functions resemble Feistel networks. This is intentional.
+<br /><br />
+One set of the above operations forms a round: a function will likely run the operation set more than once to further randomise the input.
+It usually takes 4 rounds to get a fully decorrelated result, but for some functions less or more rounds may be needed.
 
 <h3>Scoring</h3>
 Functions are scored based on how they fare in the <em>avalanche test</em>, which tries to determine how well the function follows
@@ -57,10 +62,23 @@ Grey pixels indicate the bit flipped only sometimes. The ideal function followin
 <img class="centre-display" src="/example/identity.png" />
 <p class="centre">The avalanche graph of the identity function <em>f(x) = x</em>.</p>
 <img class="centre-display" src="/example/bad.png" />
-<p class="centre">This function is not mixing well.</p>
+<p class="centre">This function is not mixing well. There are large regions where the input has no effect.</p>
 <img class="centre-display" src="/example/okay.png" />
-<p class="centre">This function has okay mixing.</p>
+<p class="centre">This function has okay mixing. There's still plenty of holes where the input does not affect the output, however.</p>
 <img class="centre-display" src="/example/good.png" />
-<p class="centre">This function has very good mixing, but it is not quite perfect.</p>
+<p class="centre">
+	This function has very good mixing, but it is not quite perfect. The highest bits neither affect (nor are affected by) the rest of the bits as much as the lower
+	bits are.
+</p>
 <img class="centre-display" src="/example/best.png" />
 <p class="centre">This function is what a good permutation should look like.</p>
+
+<br />
+The level of avalanche needed will depend on your use case, and some applications demand better avalanche properties than others. If there are demands that
+similar and correlated inputs have uncorrelated outputs, such as for hash functions and counter-based RNGs, more avalanche will be needed compared to
+a use case that only demands that the output be decorrelated from the input in isolation or where the input cannot be chosen. Chaotic RNGs that
+apply a function to its own output i.e. <em>x</em> = <em>f(x)</em> fall into this latter category.
+<br /><br />
+I would advise that one be conservative with the amount of rounds that a function is applied for and go with one or two more than what is shown
+if full decorrelation is needed. Otherwise, I have found that RNG test suites shot down even some of the best functions GenRand found after turning them
+into counter-based RNGs.

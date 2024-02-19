@@ -238,12 +238,22 @@ namespace GenRandFrontend.Data
 
 		const string IMAGE_PATH_PREFIX = "/images";
 
+		/// <summary>
+		/// Get the image path from an image reference encoded as string, suitable for src.
+		/// </summary>
+		/// <param name="imageRefHex">image ref to decode</param>
+		/// <returns>path to image in the filesystem</returns>
 		public static string GetImagePath(string imageRefHex)
 		{
 			ulong hexValue = Convert.ToUInt64(imageRefHex, 16);
 			return string.Format("{0}/{1:X3}/{2}.png", IMAGE_PATH_PREFIX, Mix12Bits(hexValue), imageRefHex);
 		}
 
+		/// <summary>
+		/// Convert long to deterministically random 12 bit value
+		/// </summary>
+		/// <param name="v">value to convert</param>
+		/// <returns>a 12 bit value</returns>
 		private static int Mix12Bits(ulong v)
 		{
 			v ^= v >> 21;

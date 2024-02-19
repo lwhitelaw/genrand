@@ -26,27 +26,50 @@
 	protected override async Task OnParametersSetAsync()
 	{
 		Loaded = false;
+		// Eager-check page/type args
 		if (!ValidTypes.Contains(Type) || Page < 1)
 		{
 			Loaded = true;
 			return;
 		}
-		Items = await api.GetARXCountByType(Type);
+		// Try to get item count
+		try
+		{
+			Items = await api.GetARXCountByType(Type);
+		}
+		catch (Exception ex)
+		{
+			// load failure
+			// Set Pages to 1 to avoid a nonsensical error message
+			Pages = 1;
+			Loaded = true;
+			return;
+		}
 		// Page count is items / 256, rounded up. This is the last valid page as pages are 1-indexed
 		// There's always at least one page
 		Pages = Math.Max((Items / 256) + ((Items % 256) > 0 ? 1 : 0), 1);
+		// Check page out-of-max-range
 		if (Page > Pages)
 		{
 			Loaded = true;
 			return;
 		}
-		if (Round < 1 || Round > 4)
+		// Try loading
+		try
 		{
-			Entries = await api.GetARXByTypeChronologically(Type, Page - 1);
+			if (Round < 1 || Round > 4)
+			{
+				Entries = await api.GetARXByTypeChronologically(Type, Page - 1);
+			}
+			else
+			{
+				Entries = await api.GetARXByTypeSortedByAvScore(Type, Round, Page - 1);
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			Entries = await api.GetARXByTypeSortedByAvScore(Type, Round, Page - 1);
+			// something went wrong, keep entries null
+			Entries = null;
 		}
 		Loaded = true;
 	}
