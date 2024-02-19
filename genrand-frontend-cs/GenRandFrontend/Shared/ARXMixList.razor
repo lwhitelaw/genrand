@@ -152,4 +152,38 @@ else
 			}
 		</tbody>
 	</table>
+	// Pagination at the end...
+	<nav>
+		<ul class="pagination">
+			@if (Page > 1)
+			{
+				<li class="page-item">
+					<a class="page-link" href="@PageRoutePrefix/@(Page-1)">
+						<span class="oi oi-caret-left"></span>
+					</a>
+				</li>
+			}
+
+			@for (int pageNumber = Math.Max(1, Page - 4); pageNumber <= Math.Min(Pages, Page + 4); pageNumber++)
+			{
+				if (pageNumber == Page)
+				{
+					<li class="page-item active"><a class="page-link" href="@PageRoutePrefix/@pageNumber">@pageNumber</a></li>
+				}
+				else
+				{
+					<li class="page-item"><a class="page-link" href="@PageRoutePrefix/@pageNumber">@pageNumber</a></li>
+				}
+			}
+
+			@if (Page < Pages)
+			{
+				<li class="page-item">
+					<a class="page-link" href="@PageRoutePrefix/@(Page+1)">
+						<span class="oi oi-caret-right"></span>
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
 }

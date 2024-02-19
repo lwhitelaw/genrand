@@ -193,7 +193,7 @@ namespace GenRandFrontend.Data
 			for (int i = 0; i < rotations.Length; i++)
 			{
 				sb.Append(xors[i] ? "XOR " : "ADD ");
-				sb.Append("ROTL(").Append(rotations[i]).Append(")");
+				sb.Append(rotations[i]);
 				if (i != rotations.Length-1) sb.Append(" ");
 			}
 			return sb.ToString();
