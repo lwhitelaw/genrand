@@ -37,6 +37,9 @@ import net.liamw.genrand.function.arx.MixARX32x2;
  */
 @Component
 public class Database {
+	/**
+	 * Representation of a generic mix in the database.
+	 */
 	public static class MixEntry {
 		/**
 		 * Mix function uses addition with constant.
@@ -185,6 +188,9 @@ public class Database {
 		}
 	}
 	
+	/**
+	 * Representation of an ARX-based mix in the database.
+	 */
 	public static class ARXMixEntry {
 		private final String type;
 		private final long definition;
@@ -197,6 +203,19 @@ public class Database {
 		private final String avImage3;
 		private final String avImage4;
 		
+		/**
+		 * Construct a mix entry, setting all values.
+		 * @param type mix type
+		 * @param definition mix packed definition
+		 * @param avScore1 one round avalanche score
+		 * @param avScore2 two round avalanche score
+		 * @param avScore3 three round avalanche score
+		 * @param avScore4 four round avalanche score
+		 * @param avImage1 one round avalanche graph
+		 * @param avImage2 two round avalanche graph
+		 * @param avImage3 three round avalanche graph
+		 * @param avImage4 four round avalanche graph
+		 */
 		public ARXMixEntry(String type, long definition, double avScore1, double avScore2, double avScore3,
 				double avScore4, String avImage1, String avImage2, String avImage3, String avImage4) {
 			this.type = type;
@@ -211,6 +230,13 @@ public class Database {
 			this.avImage4 = avImage4;
 		}
 		
+		/**
+		 * Map a JDBC ResultSet and row ID to an ARXMixEntry object. Not meant to be directly called.
+		 * @param mapper result to extract from
+		 * @param rowId the row ID
+		 * @return a MixEntry from the database row
+		 * @throws SQLException if an SQL error occurs
+		 */
 		public static ARXMixEntry fromDatabaseRowMapper(ResultSet mapper, int rowId) throws SQLException {
 			String id = mapper.getString("type");
 			long definition = mapper.getLong("definition");
@@ -287,6 +313,11 @@ public class Database {
 		}
 	}
 	
+	/**
+	 * Return a zero/one-element list containing an ARX mix with the given type and definition.
+	 * @param type type to query
+	 * @param def definition to query
+	 */
 	public List<ARXMixEntry> getARXByDefinition(String type, long def) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? AND definition = ?", pss -> {
 			pss.setString(1, type);
@@ -294,6 +325,11 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * Return the number of ARX mixes with the given type.
+	 * @param type type to query
+	 * @return number of ARX mixes
+	 */
 	public long getARXCount(String type) {
 		return database.query("SELECT count(*) FROM mixarx WHERE type = ?", pss -> {
 			pss.setString(1, type);
@@ -302,6 +338,16 @@ public class Database {
 		});
 	}
 	
+	// The functions here are duplicated due to limits with prepared statements for sort queries.
+	
+	/**
+	 * Get ARX mixes by type in chronological order, returning pages with the given size.
+	 * An empty list may be returned if there are no mixes at the requested page.
+	 * @param type type to query
+	 * @param limit maximum size of a page
+	 * @param page page to get
+	 * @return a list of mixes
+	 */
 	public List<ARXMixEntry> getARXByTypeChronologically(String type, int limit, int page) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY rowid DESC LIMIT ?,?", pss -> {
 			pss.setString(1, type);
@@ -310,6 +356,14 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * Get ARX mixes by type sorted by round 1 score, returning pages with the given size.
+	 * An empty list may be returned if there are no mixes at the requested page.
+	 * @param type type to query
+	 * @param limit maximum size of a page
+	 * @param page page to get
+	 * @return a list of mixes
+	 */
 	public List<ARXMixEntry> getARXByTypeSortByRound1(String type, int limit, int page) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore1 ASC LIMIT ?,?", pss -> {
 			pss.setString(1, type);
@@ -318,6 +372,14 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * Get ARX mixes by type sorted by round 2 score, returning pages with the given size.
+	 * An empty list may be returned if there are no mixes at the requested page.
+	 * @param type type to query
+	 * @param limit maximum size of a page
+	 * @param page page to get
+	 * @return a list of mixes
+	 */
 	public List<ARXMixEntry> getARXByTypeSortByRound2(String type, int limit, int page) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore2 ASC LIMIT ?,?", pss -> {
 			pss.setString(1, type);
@@ -326,6 +388,14 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * Get ARX mixes by type sorted by round 3 score, returning pages with the given size.
+	 * An empty list may be returned if there are no mixes at the requested page.
+	 * @param type type to query
+	 * @param limit maximum size of a page
+	 * @param page page to get
+	 * @return a list of mixes
+	 */
 	public List<ARXMixEntry> getARXByTypeSortByRound3(String type, int limit, int page) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore3 ASC LIMIT ?,?", pss -> {
 			pss.setString(1, type);
@@ -334,6 +404,14 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * Get ARX mixes by type sorted by round 4 score, returning pages with the given size.
+	 * An empty list may be returned if there are no mixes at the requested page.
+	 * @param type type to query
+	 * @param limit maximum size of a page
+	 * @param page page to get
+	 * @return a list of mixes
+	 */
 	public List<ARXMixEntry> getARXByTypeSortByRound4(String type, int limit, int page) {
 		return database.query("SELECT * FROM mixarx WHERE type = ? ORDER BY avScore4 ASC LIMIT ?,?", pss -> {
 			pss.setString(1, type);
@@ -342,6 +420,9 @@ public class Database {
 		}, ARXMixEntry::fromDatabaseRowMapper);
 	}
 	
+	/**
+	 * The root path of the image store.
+	 */
 	public static final Path IMAGE_PATH = Paths.get("./images/");
 	
 	/**
@@ -548,6 +629,12 @@ public class Database {
 		}
 	}
 	
+	/**
+	 * Put an image into the image store and return a snowflake ID. If
+	 * writing fails, zero is returned.
+	 * @param image the image to put
+	 * @return the snowflake ID to reference the image with
+	 */
 	private static long putImage(BufferedImage image) {
 		long snowflake = Snowflake.generate();
 		try {
@@ -559,12 +646,23 @@ public class Database {
 		return snowflake;
 	}
 	
+	/**
+	 * Convert a snowflake to an image path.
+	 * @param snowflake value to convert
+	 * @return the path to the image
+	 * @throws IOException if directories could not be created in the process
+	 */
 	private static Path snowflakeToPath(long snowflake) throws IOException {
 		Path dirPath = IMAGE_PATH.resolve(String.format("%03X",mix12bit(snowflake)));
 		Files.createDirectories(dirPath);
 		return dirPath.resolve(String.format("%016X.png",snowflake));
 	}
 	
+	/**
+	 * Mix a 64 bit value to a deterministically random 12 bit value.
+	 * @param v value to convert
+	 * @return a 12 bit value
+	 */
 	public static int mix12bit(long v) {
 		v ^= v >>> 21;
 		v *= 0x2AE264A9B1A36D69L;
@@ -576,6 +674,11 @@ public class Database {
 		return (int)(v & 0xFFFL);
 	}
 	
+	/**
+	 * Return the checkpoint value for the mix generator of this type to start from.
+	 * @param ident mix type
+	 * @return the checkpoint value to start at
+	 */
 	public long getCheckpoint(String ident) {
 		return database.query("SELECT checkpoint FROM arxsearch WHERE type = ?", pss -> pss.setString(1,ident), rse -> {
 			boolean hasRow = rse.next();
@@ -586,6 +689,11 @@ public class Database {
 		});
 	}
 	
+	/**
+	 * Set the checkpoint value for the mix generator of this type to start from.
+	 * @param ident mix type
+	 * @param value the checkpoint value to start at
+	 */
 	public void setCheckpoint(String ident, long value) {
 		// Don't allow values < 1
 		if (value < 1) return;
@@ -611,6 +719,10 @@ public class Database {
 		});
 	}
 	
+	/**
+	 * Clear all mixes and images with the given ARX mix type.
+	 * @param type type to clear
+	 */
 	public void clearARXTable(String type) {
 		List<ARXMixEntry> list = database.query("SELECT * FROM mixarx WHERE type = ?", pss -> {
 			pss.setString(1, type);
@@ -659,6 +771,10 @@ public class Database {
 		});
 	}
 	
+	/**
+	 * Run the given code in a database transaction.
+	 * @param caller code to run
+	 */
 	public void runTransactionally(Consumer<Database> caller) {
 		dbTransaction.execute((TransactionCallback<Void>)(status -> {
 			caller.accept(this);

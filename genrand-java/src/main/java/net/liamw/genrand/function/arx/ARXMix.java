@@ -87,6 +87,10 @@ public interface ARXMix<T extends ARXMix<T>> {
 	}
 }
 
+/**
+ * Assist class to allow efficiently unpacking arbitrary mixes through forcing the JVM to dynamically dispatch
+ * to static methods. It's otherwise unused.
+ */
 class StaticCaller extends VolatileCallSite {
 	private static final MethodType MT_CALLER = MethodType.methodType(ARXMix.class, Class.class, long.class);
 	private static final MethodType MT_RECEIVER = MethodType.methodType(ARXMix.class, long.class);

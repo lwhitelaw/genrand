@@ -65,6 +65,13 @@ public class CounterPermutation {
 		return v;
 	}
 	
+	/**
+	 * Permute v to another value 0..limit-1, using a different mix function
+	 * based on the limit.
+	 * @param v input
+	 * @param limit bound
+	 * @return permuted value
+	 */
 	public static long permute(long v, long limit) {
 		if (limit == (1L << 32)) {
 			return mix32((int)v) & 0xFFFFFFFFL;

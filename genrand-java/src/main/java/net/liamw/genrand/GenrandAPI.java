@@ -16,26 +16,56 @@ import net.liamw.genrand.util.Database.ARXMixEntry;
  */
 @RestController
 public class GenrandAPI {
+	/**
+	 * Spring needs this to exist to convert objects to JSON, even though it is otherwise not used.
+	 */
 	private final ObjectMapper mapper = new ObjectMapper();
+	/**
+	 * Handle to the database interface.
+	 */
 	private final Database database;
 	
 	public GenrandAPI(Database database) {
 		this.database = database;
 	}
 	
+	/**
+	 * Get an ARX mix by its type and definition. Returns a one-item list with the mix, or an empty list otherwise.
+	 * @param type the type to query
+	 * @param definition the packed definition to query
+	 * @return a one element list containing the mix, or an empty list
+	 */
 	@GetMapping("/arx/{type}/definition/{definition}")
 	public List<ARXMixEntry> getARXByDefinition(@PathVariable("type") String type, @PathVariable("definition") long definition) {
 		List<ARXMixEntry> list = database.getARXByDefinition(type,definition);
 		return list;
 	}
 	
+	/**
+	 * Get the number of ARX mixes with the given type.
+	 * @param type the type to query
+	 * @return the number of ARX mixes
+	 */
 	@GetMapping("/arx/{type}/count")
 	public long getARXCount(@PathVariable("type") String type) {
 		return database.getARXCount(type);
 	}
 	
+	/**
+	 * Maximum size a list should return as the page size the frontend will see.
+	 */
 	private static final int PAGE_SIZE = 256;
 	
+	// The functions below are duplicates due to limitations with prepared statements not being able to change the column affected
+	// by sorting in the query.
+	
+	/**
+	 * Get a page of ARX mixes in chronological order, 256 elements at a time. The list will be empty if there is no such page.
+	 * Page numbers are zero-indexed!
+	 * @param type the type to query
+	 * @param page page to query
+	 * @return a list of mixes
+	 */
 	@GetMapping("/arx/{type}/list/{page}")
 	public List<ARXMixEntry> getARXByTypeChronologically(@PathVariable("type") String type, @PathVariable("page") int page) {
 		List<ARXMixEntry> list = database.getARXByTypeChronologically(type,PAGE_SIZE,page);

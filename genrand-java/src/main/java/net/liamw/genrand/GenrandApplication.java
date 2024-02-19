@@ -28,9 +28,5 @@ public class GenrandApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		genmain.runMixers();
-//		genmain.vectorTest();
-//		genmain.unpackTest();
-		System.out.println("done");
-//		System.exit(0);
 	}
 }

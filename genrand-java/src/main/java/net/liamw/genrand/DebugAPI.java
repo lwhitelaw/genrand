@@ -28,6 +28,9 @@ import net.liamw.genrand.function.arx.MixARX8x4;
 import net.liamw.genrand.util.Database;
 import net.liamw.genrand.util.Database.ARXMixEntry;
 
+/**
+ * API debug interface. This is not otherwise used.
+ */
 @RestController
 public class DebugAPI {
 	private final ObjectMapper mapper = new ObjectMapper();

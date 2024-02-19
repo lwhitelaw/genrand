@@ -49,23 +49,3 @@ public class Gen32Bit {
 		}
 	}
 }
-
-/*
-Table properties
-- ID
-- Lineage ID
-- Bitfield of operators used, add, mul, xorsh, etc.
-- Number of operators used
-- Avalanche score
-- PractRand score
-- Source code (CAS?)
-- Avalanche graph image (CAS?)
-
-Gen plan
-- Start with 1 operator, addition
-- Stack random operator and calculate avalanche
-  - Give N tries to improve this mix by replacing any operator at random
-  - After N tries up, stack again and repeat
-- Keep stacking until avalanche hits a threshold, then try to improve it one last time
-- Save the end-result to database
-*/

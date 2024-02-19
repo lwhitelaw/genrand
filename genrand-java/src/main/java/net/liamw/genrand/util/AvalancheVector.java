@@ -16,7 +16,16 @@ public class AvalancheVector {
 		 */
 		public BitVector diffuse(BitVector input);
 		
+		/**
+		 * Get the size of the input in bits.
+		 * @return bit count
+		 */
 		public int inputSize();
+		
+		/**
+		 * Get the size of the output in bits.
+		 * @return bit count
+		 */
 		public int outputSize();
 	}
 	
