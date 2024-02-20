@@ -92,3 +92,7 @@ img.centre-display {
     text-align: center;
     font-style: italic;
 }
+
+.bound-width {
+    max-width: 256px;
+}
