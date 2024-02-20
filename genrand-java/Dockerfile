@@ -14,5 +14,5 @@ RUN mv $(ls target/genrand-*.jar) target/genrandapi.jar
 FROM eclipse-temurin:21 AS runtime-env
 WORKDIR /runtime
 COPY --from=build-env /build/target/genrandapi.jar genrandapi.jar
-EXPOSE 80 443
+EXPOSE 65480
 ENTRYPOINT ["java","-Xmx256M","-jar","genrandapi.jar"]

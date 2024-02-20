@@ -10,7 +10,7 @@ namespace GenRandFrontend.Data
 		/// <summary>
 		/// Bind port for the GenRand API
 		/// </summary>
-		private const string API_LOCATION = "http://localhost:8080";
+		private const string API_LOCATION = "http://localhost:65480";
 		private readonly HttpClient client;
 
 		public APIAccessorService()
@@ -40,6 +40,12 @@ namespace GenRandFrontend.Data
 			return value[0];
 		}
 
+		/// <summary>
+		/// Return the number of ARX mixes by type
+		/// </summary>
+		/// <param name="type">type to query</param>
+		/// <returns>number of mixes present</returns>
+		/// <exception cref="Exception">if there is a problem accessing the database</exception>
 		public async Task<long> GetARXCountByType(string type)
 		{
 			try
@@ -57,6 +63,13 @@ namespace GenRandFrontend.Data
 			}
 		}
 
+		/// <summary>
+		/// Get ARX mixes by type in chronological order, newest first.
+		/// </summary>
+		/// <param name="type">type to get</param>
+		/// <param name="page">page to get</param>
+		/// <returns>a list of mixes</returns>
+		/// <exception cref="Exception">if there is a problem accessing the database</exception>
 		public async Task<List<ARXMixEntry>> GetARXByTypeChronologically(string type, int page)
 		{
 			List<ARXMixEntry>? value = (List<ARXMixEntry>?) await client.GetFromJsonAsync($"{API_LOCATION}/arx/{type}/list/{page}", typeof(List<ARXMixEntry>));
@@ -67,6 +80,15 @@ namespace GenRandFrontend.Data
 			return value;
 		}
 
+		/// <summary>
+		/// Get ARX mixes sorted by a given round score.
+		/// </summary>
+		/// <param name="type">type to get</param>
+		/// <param name="round">round to get from 1 to 4</param>
+		/// <param name="page">page to get</param>
+		/// <returns>a list of mixes</returns>
+		/// <exception cref="ArgumentException">if the round is invalid</exception>
+		/// <exception cref="Exception">if there is a problem accessing the database</exception>
 		public async Task<List<ARXMixEntry>> GetARXByTypeSortedByAvScore(string type, int round, int page)
 		{
 			string[] ROUNDS = { "unused", "round1", "round2", "round3", "round4" };
